@@ -26,7 +26,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
           
           {/* Category Badge */}
           <div className="absolute top-4 left-4">
-            <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">
+            <span className="category-badge inline-block px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full tracking-wider">
               {article.category.name}
             </span>
           </div>
@@ -34,7 +34,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
           {/* Featured Badge */}
           {article.featured && (
             <div className="absolute top-4 right-4">
-              <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-red-600 rounded-full">
+              <span className="category-badge inline-block px-3 py-1 text-xs font-semibold text-white bg-red-600 rounded-full tracking-wider">
                 Muhimmi
               </span>
             </div>
@@ -61,20 +61,20 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
           {/* Meta Info */}
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-500">
             <div className="flex items-center space-x-4">
-              <span className="flex items-center space-x-1">
+              <span className="meta-info flex items-center space-x-1 tabular-nums">
                 <FiClock className="w-3.5 h-3.5" />
                 <span>{formatHausaDate(article.publishedAt, 'relative')}</span>
               </span>
               
               {article.views && (
-                <span className="flex items-center space-x-1">
+                <span className="stat-number flex items-center space-x-1 tabular-nums">
                   <FiEye className="w-3.5 h-3.5" />
                   <span>{article.views.toLocaleString()}</span>
                 </span>
               )}
             </div>
 
-            <span className="font-medium">
+            <span className="meta-info font-medium tabular-nums">
               {getReadingTime(article.content)}
             </span>
           </div>
@@ -88,7 +88,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
                 className="w-8 h-8 rounded-full mr-2"
               />
             )}
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
               {article.author.name}
             </span>
           </div>

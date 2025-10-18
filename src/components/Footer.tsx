@@ -31,10 +31,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+            <h3 className="brand-name text-2xl font-bold text-blue-600 dark:text-blue-400 mb-4 tracking-tight">
               Technologiya
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md leading-relaxed">
               Mafi kyawun wurin samun sabbin labarai game da wayoyi, manhajoji, da dabaru na fasaha a cikin Hausa.
             </p>
             
@@ -60,7 +60,7 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h4 className="font-mono font-bold text-gray-900 dark:text-gray-100 mb-4 tracking-wide">
               Rukunin Labarai
             </h4>
             <ul className="space-y-2">
@@ -79,7 +79,7 @@ export default function Footer() {
 
           {/* Info Links */}
           <div>
-            <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h4 className="font-mono font-bold text-gray-900 dark:text-gray-100 mb-4 tracking-wide">
               Bayani
             </h4>
             <ul className="space-y-2">
@@ -100,7 +100,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="font-mono text-gray-600 dark:text-gray-400 text-sm tabular-nums">
               © {currentYear} Technologiya. Duk haƙƙoƙin an keɓe.
             </p>
             <p className="text-gray-600 dark:text-gray-400 text-sm">

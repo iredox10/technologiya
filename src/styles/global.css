@@ -1,19 +1,104 @@
 @import "tailwindcss";
 
-/* Custom Hausa font and styling */
-@layer base {
-  body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
-  }
+/* Custom Hausa font and styling with creative monospace fonts */
+:root {
+  --font-mono: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --font-display: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+body {
+  background-color: white;
+  color: rgb(17 24 39);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dark body {
+  background-color: rgb(17 24 39);
+  color: rgb(243 244 246);
+}
+
+/* Headings with creative monospace styling */
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-ligatures: common-ligatures;
+}
+
+h2, h3 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h4, h5, h6 {
+  font-weight: 700;
+}
+
+/* Code and technical elements */
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-variant-ligatures: common-ligatures;
+}
+
+/* Brand name styling */
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-ligatures: discretionary-ligatures;
+}
+
+/* Category badges with monospace */
+.category-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Stats and numbers */
+.stat-number, .meta-info {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons with character */
+.btn-primary, .btn-secondary {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* Custom utilities */
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.text-balance {
+  text-wrap: balance;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Ligature controls */
+.ligatures-normal {
+  font-variant-ligatures: common-ligatures;
+}
+
+.ligatures-none {
+  font-variant-ligatures: none;
+}
+
+.ligatures-all {
+  font-variant-ligatures: discretionary-ligatures;
+}
+
+/* Number styling */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

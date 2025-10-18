@@ -54,13 +54,27 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
     <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
     
     <script is:inline>
-      // Dark mode initialization
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      // Dark mode initialization - run before page renders to avoid flash
+      (function() {
+        const theme = localStorage.getItem('theme');
+        const html = document.documentElement;
+        
+        // Remove any existing dark class first
+        html.classList.remove('dark');
+        
+        if (theme === 'dark') {
+          html.classList.add('dark');
+        } else if (theme === 'light') {
+          html.classList.remove('dark');
+        } else {
+          // No theme set, default to light
+          html.classList.remove('dark');
+          // Uncomment below to use system preference as default
+          // if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          //   html.classList.add('dark');
+          // }
+        }
+      })();
     </script>
   </head>
   <body>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSun, FiMoon, FiSearch } from 'react-icons/fi';
 
 interface NavLink {
@@ -18,6 +18,14 @@ const navLinks: NavLink[] = [
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize theme on mount
+  useEffect(() => {
+    setMounted(true);
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setIsDark(isDarkMode);
+  }, []);
 
   const toggleTheme = () => {
     const html = document.documentElement;
@@ -34,12 +42,40 @@ export default function Header() {
     }
   };
 
-  // Initialize theme state on mount
-  if (typeof window !== 'undefined') {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    if (isDark !== isDarkMode) {
-      setIsDark(isDarkMode);
-    }
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <nav className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <a href="/" className="flex items-center space-x-2">
+              <div className="brand-name text-2xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
+                Technologiya
+              </div>
+            </a>
+            <div className="hidden md:flex items-center space-x-6">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="font-mono text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors tracking-wide"
+                >
+                  {link.name}
+                </a>
+              ))}
+            </div>
+            <div className="flex items-center space-x-3">
+              <a href="/search" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Nemo">
+                <FiSearch className="w-5 h-5" />
+              </a>
+              <div className="p-2">
+                <FiMoon className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
+    );
   }
 
   return (
@@ -48,7 +84,7 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <a href="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="brand-name text-2xl font-bold text-blue-600 dark:text-blue-400 tracking-tight">
               Technologiya
             </div>
           </a>
@@ -59,7 +95,7 @@ export default function Header() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                className="font-mono text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors tracking-wide"
               >
                 {link.name}
               </a>
