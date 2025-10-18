@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 /* Custom Hausa font and styling with creative monospace fonts */
 :root {
   --font-mono: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
