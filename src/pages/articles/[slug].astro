@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import ArticleCard from '../../components/ArticleCard';
+import HausaTTS from '../../components/HausaTTS';
 import { mockArticles, getArticleBySlug, getRelatedArticles } from '../../data/mockData';
 import { formatHausaDate, getReadingTime } from '../../utils/hausa';
 import { FiClock, FiEye, FiShare2, FiUser, FiCalendar } from 'react-icons/fi';
@@ -147,6 +148,13 @@ const shareTitle = encodeURIComponent(article.title);
         </a>
       </div>
     </header>
+
+    <!-- Text-to-Speech Component -->
+    <HausaTTS 
+      text={article.content} 
+      articleId={article.id}
+      client:load 
+    />
 
     <!-- Article Content -->
     <div class="prose prose-lg dark:prose-invert max-w-none mb-12
