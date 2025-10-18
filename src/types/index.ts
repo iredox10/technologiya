@@ -12,6 +12,7 @@ export interface Article {
   updatedAt?: string;
   featured?: boolean;
   views?: number;
+  status?: 'draft' | 'published';
 }
 
 export interface Author {

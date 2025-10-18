@@ -16,7 +16,7 @@ export function getStaticPaths() {
 
 const { article } = Astro.props;
 const relatedArticles = getRelatedArticles(article.id);
-const shareUrl = Astro.url.href;
+const shareUrl = `${Astro.site || 'https://technologiya.com'}/articles/${article.slug}`;
 const shareTitle = encodeURIComponent(article.title);
 ---
 
@@ -65,18 +65,18 @@ const shareTitle = encodeURIComponent(article.title);
         </div>
 
         <div class="meta-info flex items-center space-x-1 text-sm tabular-nums">
-          <FiCalendar class="w-4 h-4" />
+          <FiCalendar className="w-4 h-4" />
           <span>{formatHausaDate(article.publishedAt, 'full')}</span>
         </div>
 
         <div class="meta-info flex items-center space-x-1 text-sm tabular-nums">
-          <FiClock class="w-4 h-4" />
+          <FiClock className="w-4 h-4" />
           <span>{getReadingTime(article.content)}</span>
         </div>
 
         {article.views && (
           <div class="stat-number flex items-center space-x-1 text-sm tabular-nums">
-            <FiEye class="w-4 h-4" />
+            <FiEye className="w-4 h-4" />
             <span>{article.views.toLocaleString()} kallonin</span>
           </div>
         )}
@@ -104,7 +104,7 @@ const shareTitle = encodeURIComponent(article.title);
 
       <!-- Share Buttons -->
       <div class="flex items-center space-x-3 mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <FiShare2 class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        <FiShare2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Raba:</span>
         
         <a
@@ -114,7 +114,7 @@ const shareTitle = encodeURIComponent(article.title);
           class="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
           aria-label="Raba a Facebook"
         >
-          <FaFacebook class="w-4 h-4" />
+          <FaFacebook className="w-4 h-4" />
         </a>
 
         <a
@@ -124,7 +124,7 @@ const shareTitle = encodeURIComponent(article.title);
           class="p-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors"
           aria-label="Raba a Twitter"
         >
-          <FaTwitter class="w-4 h-4" />
+          <FaTwitter className="w-4 h-4" />
         </a>
 
         <a
@@ -134,7 +134,7 @@ const shareTitle = encodeURIComponent(article.title);
           class="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
           aria-label="Raba a WhatsApp"
         >
-          <FaWhatsapp class="w-4 h-4" />
+          <FaWhatsapp className="w-4 h-4" />
         </a>
 
         <a
@@ -144,7 +144,7 @@ const shareTitle = encodeURIComponent(article.title);
           class="p-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-colors"
           aria-label="Raba a LinkedIn"
         >
-          <FaLinkedin class="w-4 h-4" />
+          <FaLinkedin className="w-4 h-4" />
         </a>
       </div>
     </header>
@@ -160,7 +160,7 @@ const shareTitle = encodeURIComponent(article.title);
     <!-- Article Content -->
     <div class="prose prose-lg dark:prose-invert max-w-none mb-12
                 prose-headings:text-gray-900 dark:prose-headings:text-gray-100
-                prose-p:text-gray-700 dark:prose-p:text-gray-300
+                prose-p:text-gray-700 dark:prose-p:text-gray-300 
                 prose-a:text-blue-600 dark:prose-a:text-blue-400
                 prose-strong:text-gray-900 dark:prose-strong:text-gray-100
                 prose-code:text-gray-900 dark:prose-code:text-gray-100
@@ -176,7 +176,7 @@ const shareTitle = encodeURIComponent(article.title);
     {article.author.bio && (
       <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-12">
         <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-          <FiUser class="w-5 h-5 mr-2" />
+          <FiUser className="w-5 h-5 mr-2" />
           Game da Marubucin
         </h3>
         <div class="flex items-start space-x-4">
