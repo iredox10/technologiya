@@ -1,118 +1,131 @@
-# ⚠️ IMPORTANT: MMS-TTS API Key Required
+# ⚠️ CRITICAL: Hugging Face API Key REQUIRED
 
-## Issue Fixed ✅
+## Current Error
 
-The error you encountered:
+If you're seeing this error:
 ```
-InputError: No Inference Provider available for model facebook/mms-tts-hau
+Error: API returned 401: {"error":"Invalid username or password."}
 ```
 
-Has been **FIXED** by switching from the Hugging Face SDK to direct API calls.
+**This means you MUST add a Hugging Face API key.** The free tier without authentication is no longer available.
 
 ## What Changed
+
+Hugging Face Inference API now **requires authentication** for MMS-TTS models. You cannot use the TTS feature without an API key.
 
 - ❌ Removed: `@huggingface/inference` package (doesn't support MMS-TTS)
 - ✅ Added: Direct API calls to Hugging Face Inference API
 - ✅ Updated: Component now uses `fetch()` to call the model directly
+- ⚠️ **REQUIRED**: API key is now mandatory
 
-## How to Use
+## Quick Fix (Get API Key Now)
 
-### Option 1: Without API Key (Free, But Slow)
+**API key is 100% FREE** and takes 2 minutes to get:
 
-The component works **without an API key**, but you'll experience:
+### Step 1: Get Free API Key (2 minutes)
 
-- ⏱️ **20-60 seconds wait** on first request (model cold start)
-- 🐢 Slow subsequent requests without cache
-- ⚠️ Rate limiting on free tier
-- 💡 Best for: Testing only
+1. **Go to**: https://huggingface.co/join
+2. **Sign up** (free account - use Google/GitHub for quick signup)
+3. **Go to**: https://huggingface.co/settings/tokens
+4. **Click** "New token"
+5. **Name it**: "Technologiya TTS"
+6. **Select** "Read" role (default)
+7. **Click** "Generate a token"
+8. **Copy** the token (starts with `hf_...`)
 
-**Just click "Kunna Sauti" and be patient!**
+⚠️ **Keep this token safe!** You'll need it in the next step.
 
-### Option 2: With API Key (Recommended for Production)
+### Step 2: Add to Your Project (Choose One Method)
 
-Get faster response times and no cold starts:
+#### Method A: Environment Variable (RECOMMENDED ✅)
 
-#### Step 1: Get Free API Key
+**Run these commands in your terminal:**
 
-1. Go to: https://huggingface.co/join
-2. Sign up (free account)
-3. Go to: https://huggingface.co/settings/tokens
-4. Click "New token"
-5. Name it: "Technologiya TTS"
-6. Select "Read" role
-7. Copy the token (starts with `hf_...`)
-
-#### Step 2: Add to Your Project
-
-**Method A: Environment Variable (Recommended)**
-
-1. Create `.env` file:
 ```bash
+# 1. Go to your project directory
 cd /home/iredox/Desktop/technologiya
+
+# 2. Create .env file with your API key
+# Replace hf_your_token_here with your actual token
 echo 'PUBLIC_HUGGINGFACE_API_KEY=hf_your_token_here' > .env
+
+# 3. Add .env to .gitignore (important!)
+echo ".env" >> .gitignore
 ```
 
-2. Update `/src/pages/articles/[slug].astro`:
+**Then update `/src/pages/articles/[slug].astro`:**
+
+Find this line:
 ```astro
----
-import HausaTTS from '../../components/HausaTTS';
-
-const apiKey = import.meta.env.PUBLIC_HUGGINGFACE_API_KEY;
----
-
 <HausaTTS 
   text={article.content} 
   articleId={article.id}
-  apiKey={apiKey}
   client:load 
 />
 ```
 
-3. Add `.env` to `.gitignore`:
-```bash
-echo ".env" >> .gitignore
+Replace it with:
+```astro
+<HausaTTS 
+  text={article.content} 
+  articleId={article.id}
+  apiKey={import.meta.env.PUBLIC_HUGGINGFACE_API_KEY}
+  client:load 
+/>
 ```
 
-4. Restart dev server:
+**Finally, restart your dev server:**
+```bash
+# Stop the current server (Ctrl+C) then run:
+bun run dev
+```
+
+#### Method B: Quick Test (Temporary - for testing only)
+
+**Update `/src/pages/articles/[slug].astro`:**
+
+```astro
+<HausaTTS 
+  text={article.content} 
+  articleId={article.id}
+  apiKey="hf_your_actual_token_here"
+  client:load 
+/>
+```
+
+**Then restart dev server:**
 ```bash
 bun run dev
 ```
 
-**Method B: Direct Pass (Not Recommended - for testing only)**
+⚠️ **WARNING**: Never commit this file to git with your API key! Use Method A for production.
 
-```astro
-<HausaTTS 
-  text={article.content} 
-  articleId={article.id}
-  apiKey="hf_your_token_here"
-  client:load 
-/>
-```
+## Testing After Adding API Key
 
-⚠️ Never commit API keys to git!
+1. **Make sure you added the API key** (see Step 2 above)
 
-## Testing Now (Without API Key)
+2. **Restart your dev server** (Ctrl+C then `bun run dev`)
 
-1. **Open any article**: http://localhost:4321/articles/quantum-computing-breakthrough
+3. **Open any article**: http://localhost:4321/articles/quantum-computing-breakthrough
 
-2. **Click "Kunna Sauti"** button
+4. **Click "Kunna Sauti"** button
 
-3. **Wait 20-60 seconds** (model is loading for the first time)
+5. **Wait 2-5 seconds** (first generation)
    - You'll see progress bar
    - Console will show the request
 
-4. **Audio will play** once loaded!
+6. **Audio will play** once loaded!
 
-5. **Second time**: Will load from cache (instant)
+7. **Second time**: Will load from cache (instant)
 
-## Performance Comparison
+## Performance With API Key
 
-| Feature | Without API Key | With API Key |
-|---------|----------------|--------------|
-| First request | 20-60s (cold start) | 2-5s |
-| Cached audio | Instant | Instant |
-| Rate limits | Limited | Higher limits |
-| Best for | Testing | Production |
+| Feature | Performance |
+|---------|-------------|
+| First request | 2-5 seconds (may take up to 20s if model is cold) |
+| Cached audio | Instant (<100ms) |
+| Rate limits | Generous free tier limits |
+| Cost | **100% FREE** |
 
 ## Expected Behavior
 

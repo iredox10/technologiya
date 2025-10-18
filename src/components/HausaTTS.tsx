@@ -154,16 +154,17 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
 
       setProgress(30);
 
+      // Check if API key is provided (now required for Hugging Face Inference API)
+      if (!apiKey) {
+        throw new Error('Mabuɗin API yana buƙata. Duba API_KEY_SETUP.md don karin bayani. (API key required. See API_KEY_SETUP.md for instructions.)');
+      }
+
       // Call Hugging Face Inference API directly
       const API_URL = 'https://api-inference.huggingface.co/models/facebook/mms-tts-hau';
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       };
-      
-      // Add API key if provided
-      if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`;
-      }
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -178,7 +179,15 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', response.status, errorText);
-        throw new Error(`API returned ${response.status}: ${errorText}`);
+        
+        // Provide helpful error messages
+        if (response.status === 401) {
+          throw new Error('Mabuɗin API ba daidai ba ne. Tabbatar da cewa kun sanya mabuɗin da ke farawa da "hf_". (Invalid API key. Make sure you entered a key starting with "hf_".)');
+        } else if (response.status === 503) {
+          throw new Error('Ana loda tsarin. Da fatan za a sake gwadawa cikin mintuna kaɗan. (Model is loading. Please retry in a few minutes.)');
+        } else {
+          throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
       }
 
       // Convert response to ArrayBuffer
