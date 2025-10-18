@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiPlay, FiPause, FiVolume2, FiLoader, FiAlertCircle } from 'react-icons/fi';
 import WaveSurfer from 'wavesurfer.js';
-import { HfInference } from '@huggingface/inference';
 
 interface HausaTTSProps {
   text: string;
@@ -22,13 +21,6 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const audioBufferRef = useRef<ArrayBuffer | null>(null);
-  const hfClientRef = useRef<HfInference | null>(null);
-
-  // Initialize Hugging Face client
-  useEffect(() => {
-    // You can use the free inference API or provide your own API key
-    hfClientRef.current = new HfInference(apiKey);
-  }, [apiKey]);
 
   // Initialize WaveSurfer
   useEffect(() => {
@@ -132,7 +124,7 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
 
   // Generate Hausa speech using MMS-TTS
   const generateSpeech = async () => {
-    if (!hfClientRef.current || !wavesurferRef.current) return;
+    if (!wavesurferRef.current) return;
 
     setIsLoading(true);
     setError(null);
@@ -155,21 +147,39 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
       const cleanText = extractTextFromHTML(text);
       
       // Limit text length (MMS-TTS works best with shorter texts)
-      const maxLength = 1000;
+      const maxLength = 500;
       const textToSpeak = cleanText.length > maxLength 
         ? cleanText.substring(0, maxLength) + '...'
         : cleanText;
 
       setProgress(30);
 
-      // Generate speech using MMS-TTS for Hausa (hau)
-      // Model: facebook/mms-tts-hau
-      const response = await hfClientRef.current.textToSpeech({
-        model: 'facebook/mms-tts-hau',
-        inputs: textToSpeak,
+      // Call Hugging Face Inference API directly
+      const API_URL = 'https://api-inference.huggingface.co/models/facebook/mms-tts-hau';
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add API key if provided
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          inputs: textToSpeak,
+        }),
       });
 
       setProgress(70);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
 
       // Convert response to ArrayBuffer
       const audioBuffer = await response.arrayBuffer();
@@ -181,7 +191,7 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
       setProgress(90);
 
       // Load audio into WaveSurfer
-      const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+      const blob = new Blob([audioBuffer], { type: 'audio/flac' });
       const url = URL.createObjectURL(blob);
       await wavesurferRef.current.load(url);
 
@@ -191,7 +201,7 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
 
     } catch (err) {
       console.error('Error generating speech:', err);
-      setError('Ba a iya samar da sauti. Da fatan za a sake gwadawa.');
+      setError('Ba a iya samar da sauti. Da fatan za a sake gwadawa. ' + (err instanceof Error ? err.message : ''));
       setIsLoading(false);
       setProgress(0);
     }

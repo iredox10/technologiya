@@ -10,14 +10,10 @@ Your Technologiya website now uses **Meta's MMS-TTS (Massively Multilingual Spee
 - **Before**: English voices reading Hausa text (poor pronunciation)
 - **After**: Native Hausa speech synthesis using Meta's state-of-the-art AI model
 
-### ✅ Installed Dependencies
-```bash
-bun add @huggingface/inference  # Hugging Face SDK for MMS-TTS
-```
-
 ### ✅ Updated Component
 - **File**: `/src/components/HausaTTS.tsx`
 - **Model**: `facebook/mms-tts-hau` (Hausa language)
+- **API**: Direct Hugging Face Inference API calls
 - **Features**:
   - Authentic Hausa pronunciation
   - Audio caching for instant replay
@@ -28,8 +24,8 @@ bun add @huggingface/inference  # Hugging Face SDK for MMS-TTS
 ## How It Works
 
 1. **User clicks play button** on an article
-2. **Component extracts text** from article content (up to 1000 chars)
-3. **Calls Hugging Face API** to generate Hausa speech using MMS-TTS
+2. **Component extracts text** from article content (up to 500 chars)
+3. **Calls Hugging Face Inference API** directly to generate Hausa speech using MMS-TTS
 4. **Caches audio** in browser localStorage for instant replay
 5. **Displays waveform** and allows playback control
 
@@ -37,12 +33,13 @@ bun add @huggingface/inference  # Hugging Face SDK for MMS-TTS
 
 ### Free Tier (No API Key)
 The component works out of the box using Hugging Face's free inference API:
-- **Rate Limit**: ~1000 requests/day
-- **Best For**: Development and low-traffic sites
+- **Rate Limit**: Limited requests, may see "model loading" delays
+- **Cold Start**: First request may take 20-60 seconds (model loading)
+- **Best For**: Development and testing
 - **No Setup**: Works immediately
 
-### Production (With API Key)
-For production use, get a free Hugging Face API key:
+### Production (With API Key) - RECOMMENDED
+For production use, get a free Hugging Face API key to avoid rate limits and cold starts:
 
 1. **Sign up**: https://huggingface.co/join
 2. **Get API key**: https://huggingface.co/settings/tokens
@@ -105,27 +102,42 @@ bun run dev
 
 ## Performance
 
-### First Load
-- **Time**: 2-5 seconds
+### First Load (Without API Key)
+- **Time**: 20-60 seconds (model cold start)
+- **Process**: Wait for model → API call → Audio generation → Caching
+- **Network**: ~100KB - 500KB depending on text length
+
+### First Load (With API Key)
+- **Time**: 2-5 seconds (no cold start)
 - **Process**: API call → Audio generation → Caching
-- **Network**: ~500KB - 2MB depending on text length
+- **Network**: ~100KB - 500KB depending on text length
 
 ### Subsequent Loads
 - **Time**: Instant (<100ms)
 - **Process**: Load from localStorage cache
 - **Network**: 0 KB (fully cached)
 
+### Important Notes
+- **Cold Start**: Without an API key, the model may need to "wake up" on first request (20-60s)
+- **With API Key**: Faster response, no cold start delays
+- **Cache**: Once generated, audio is cached forever (until browser cache cleared)
+
 ## Troubleshooting
 
 ### Error: "Ba a iya samar da sauti"
 
-**Cause**: Network issue or rate limit exceeded
+**Possible Causes**:
+1. Network connectivity issues
+2. Model is loading (cold start - wait 20-60 seconds)
+3. Rate limit exceeded (free tier)
+4. API endpoint temporarily unavailable
 
 **Fix**:
 1. Check internet connection
-2. Wait a few minutes (rate limit resets)
-3. Add API key for higher limits
-4. Check browser console for details
+2. **Wait patiently** on first request (model cold start can take 20-60s)
+3. Add API key for faster response and higher limits
+4. Check browser console for detailed error messages
+5. Try again after a few minutes
 
 ### Audio Not Playing
 
