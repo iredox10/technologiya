@@ -1,25 +1,34 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiPlay, FiPause, FiVolume2, FiLoader } from 'react-icons/fi';
+import { FiPlay, FiPause, FiVolume2, FiLoader, FiAlertCircle } from 'react-icons/fi';
 import WaveSurfer from 'wavesurfer.js';
+import { HfInference } from '@huggingface/inference';
 
 interface HausaTTSProps {
   text: string;
   articleId: string;
+  apiKey?: string; // Optional: user can provide their own HF API key
 }
 
-export default function HausaTTS({ text, articleId }: HausaTTSProps) {
+export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [speed, setSpeed] = useState(1);
-  const [pitch, setPitch] = useState(1);
-  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [audioGenerated, setAudioGenerated] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioBufferRef = useRef<ArrayBuffer | null>(null);
+  const hfClientRef = useRef<HfInference | null>(null);
+
+  // Initialize Hugging Face client
+  useEffect(() => {
+    // You can use the free inference API or provide your own API key
+    hfClientRef.current = new HfInference(apiKey);
+  }, [apiKey]);
 
   // Initialize WaveSurfer
   useEffect(() => {
@@ -35,14 +44,13 @@ export default function HausaTTS({ text, articleId }: HausaTTSProps) {
       cursorWidth: 1,
       height: 80,
       barGap: 2,
-      responsive: true,
     });
 
     wavesurferRef.current = wavesurfer;
 
     wavesurfer.on('ready', () => {
-      setIsReady(true);
       setDuration(wavesurfer.getDuration());
+      setIsLoading(false);
     });
 
     wavesurfer.on('audioprocess', () => {
@@ -54,18 +62,39 @@ export default function HausaTTS({ text, articleId }: HausaTTSProps) {
       setCurrentTime(0);
     });
 
+    wavesurfer.on('play', () => {
+      setIsPlaying(true);
+    });
+
+    wavesurfer.on('pause', () => {
+      setIsPlaying(false);
+    });
+
     return () => {
       wavesurfer.destroy();
     };
   }, []);
 
-  // Get cached audio or generate new one
-  const getCachedAudio = async (): Promise<string | null> => {
-    const cacheKey = `tts_${articleId}_${speed}_${pitch}`;
+  // Extract clean text from HTML
+  const extractTextFromHTML = (html: string): string => {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || '';
+  };
+
+  // Get cached audio from localStorage
+  const getCachedAudio = (): ArrayBuffer | null => {
     try {
+      const cacheKey = `tts_mms_${articleId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
-        return cached;
+        // Convert base64 back to ArrayBuffer
+        const binaryString = atob(cached);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
       }
     } catch (error) {
       console.error('Error reading cache:', error);
@@ -73,20 +102,27 @@ export default function HausaTTS({ text, articleId }: HausaTTSProps) {
     return null;
   };
 
-  // Cache audio data
-  const cacheAudio = async (audioData: string) => {
-    const cacheKey = `tts_${articleId}_${speed}_${pitch}`;
+  // Cache audio data to localStorage
+  const cacheAudio = (audioBuffer: ArrayBuffer) => {
+    const cacheKey = `tts_mms_${articleId}`;
     try {
-      localStorage.setItem(cacheKey, audioData);
+      // Convert ArrayBuffer to base64
+      const bytes = new Uint8Array(audioBuffer);
+      const binary = String.fromCharCode(...bytes);
+      const base64 = btoa(binary);
+      localStorage.setItem(cacheKey, base64);
     } catch (error) {
       console.error('Error caching audio:', error);
-      // If localStorage is full, try to clear old TTS entries
+      // If localStorage is full, clear old TTS entries
       try {
         const keys = Object.keys(localStorage);
         const ttsKeys = keys.filter(k => k.startsWith('tts_'));
         if (ttsKeys.length > 0) {
-          localStorage.removeItem(ttsKeys[0]); // Remove oldest
-          localStorage.setItem(cacheKey, audioData);
+          localStorage.removeItem(ttsKeys[0]);
+          const bytes = new Uint8Array(audioBuffer);
+          const binary = String.fromCharCode(...bytes);
+          const base64 = btoa(binary);
+          localStorage.setItem(cacheKey, base64);
         }
       } catch (e) {
         console.error('Could not clear cache:', e);
@@ -94,245 +130,197 @@ export default function HausaTTS({ text, articleId }: HausaTTSProps) {
     }
   };
 
-  // Generate speech using Web Speech API
+  // Generate Hausa speech using MMS-TTS
   const generateSpeech = async () => {
+    if (!hfClientRef.current || !wavesurferRef.current) return;
+
     setIsLoading(true);
+    setError(null);
+    setProgress(0);
 
     try {
       // Check cache first
-      const cached = await getCachedAudio();
-      if (cached && wavesurferRef.current) {
-        await wavesurferRef.current.load(cached);
+      const cached = getCachedAudio();
+      if (cached) {
+        audioBufferRef.current = cached;
+        const blob = new Blob([cached], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        await wavesurferRef.current.load(url);
+        setAudioGenerated(true);
         setIsLoading(false);
         return;
       }
 
-      // Generate new speech
-      if (!('speechSynthesis' in window)) {
-        alert('Gafarara, wannan browser ba ya goyan bayan karanta rubutu.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Clean text for speech (remove HTML tags)
-      const cleanText = text
-        .replace(/<[^>]*>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 5000); // Limit to 5000 characters
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = 'ha-NG'; // Hausa language code
-      utterance.rate = speed;
-      utterance.pitch = pitch;
-
-      // Try to find a Hausa voice or fallback to default
-      const voices = window.speechSynthesis.getVoices();
-      const hausaVoice = voices.find(voice => 
-        voice.lang.startsWith('ha') || 
-        voice.lang.startsWith('yo') // Yoruba as fallback (similar region)
-      );
+      // Extract clean text
+      const cleanText = extractTextFromHTML(text);
       
-      if (hausaVoice) {
-        utterance.voice = hausaVoice;
-      }
+      // Limit text length (MMS-TTS works best with shorter texts)
+      const maxLength = 1000;
+      const textToSpeak = cleanText.length > maxLength 
+        ? cleanText.substring(0, maxLength) + '...'
+        : cleanText;
 
-      utteranceRef.current = utterance;
+      setProgress(30);
 
-      // Create audio context for recording
-      audioContextRef.current = new AudioContext();
-      const destination = audioContextRef.current.createMediaStreamDestination();
-      const mediaRecorder = new MediaRecorder(destination.stream);
-      const chunks: Blob[] = [];
+      // Generate speech using MMS-TTS for Hausa (hau)
+      // Model: facebook/mms-tts-hau
+      const response = await hfClientRef.current.textToSpeech({
+        model: 'facebook/mms-tts-hau',
+        inputs: textToSpeak,
+      });
 
-      mediaRecorder.ondataavailable = (e) => {
-        chunks.push(e.data);
-      };
+      setProgress(70);
 
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(blob);
-        
-        // Cache the audio
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          cacheAudio(base64);
-        };
-        reader.readAsDataURL(blob);
+      // Convert response to ArrayBuffer
+      const audioBuffer = await response.arrayBuffer();
+      audioBufferRef.current = audioBuffer;
 
-        // Load into wavesurfer
-        if (wavesurferRef.current) {
-          await wavesurferRef.current.load(audioUrl);
-        }
-        
-        setIsLoading(false);
-      };
+      // Cache the audio
+      cacheAudio(audioBuffer);
 
-      utterance.onend = () => {
-        mediaRecorder.stop();
-      };
+      setProgress(90);
 
-      utterance.onerror = (error) => {
-        console.error('Speech synthesis error:', error);
-        setIsLoading(false);
-        alert('An kasa samar da sauti. A sake gwadawa.');
-      };
+      // Load audio into WaveSurfer
+      const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      await wavesurferRef.current.load(url);
 
-      mediaRecorder.start();
-      window.speechSynthesis.speak(utterance);
-
-    } catch (error) {
-      console.error('Error generating speech:', error);
+      setProgress(100);
+      setAudioGenerated(true);
       setIsLoading(false);
-      alert('An samu matsala wajen samar da sauti.');
+
+    } catch (err) {
+      console.error('Error generating speech:', err);
+      setError('Ba a iya samar da sauti. Da fatan za a sake gwadawa.');
+      setIsLoading(false);
+      setProgress(0);
     }
   };
 
   // Toggle play/pause
-  const togglePlayPause = () => {
-    if (!wavesurferRef.current || !isReady) {
-      generateSpeech();
-      return;
-    }
+  const togglePlayPause = async () => {
+    if (!wavesurferRef.current) return;
 
-    if (isPlaying) {
-      wavesurferRef.current.pause();
-      setIsPlaying(false);
+    if (!audioGenerated) {
+      await generateSpeech();
+      // Start playing after generation
+      setTimeout(() => {
+        wavesurferRef.current?.play();
+      }, 100);
     } else {
-      wavesurferRef.current.play();
-      setIsPlaying(true);
+      wavesurferRef.current.playPause();
     }
   };
 
-  // Update speed
+  // Handle speed change
   const handleSpeedChange = (newSpeed: number) => {
     setSpeed(newSpeed);
-    if (wavesurferRef.current && isReady) {
+    if (wavesurferRef.current) {
       wavesurferRef.current.setPlaybackRate(newSpeed);
     }
   };
 
-  // Format time
-  const formatTime = (seconds: number) => {
+  // Format time display
+  const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="my-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-blue-200 dark:border-gray-700 shadow-lg">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border-2 border-blue-200 dark:border-blue-800 p-6 mb-8">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-blue-600 rounded-lg">
-          <FiVolume2 className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h3 className="font-mono font-bold text-gray-900 dark:text-gray-100 tracking-wide">
-            Saurari Labarin
-          </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            Kunna sauti don sauraron wannan labari
-          </p>
-        </div>
-      </div>
-
-      {/* Waveform Visualizer */}
-      <div className="mb-4 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div ref={waveformRef} className="w-full" />
-        
-        {/* Time Display */}
-        {isReady && (
-          <div className="flex justify-between items-center mt-2 text-xs font-mono text-gray-600 dark:text-gray-400 tabular-nums">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <FiLoader className="w-8 h-8 text-blue-600 animate-spin" />
-            <span className="ml-3 font-mono text-gray-700 dark:text-gray-300">
-              Ana shirya sauti...
-            </span>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isReady && !isLoading && (
-          <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
-            <p className="font-mono text-sm">
-              Danna maballin kunnawa don fara
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <FiVolume2 className="text-2xl text-blue-600 dark:text-blue-400" />
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white" style={{ fontFamily: "'Fira Code', monospace" }}>
+              Kunna Sauti
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Meta MMS-TTS (Hausa)
             </p>
           </div>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Play/Pause Button */}
-        <button
-          onClick={togglePlayPause}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-mono font-semibold rounded-lg transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed"
-        >
-          {isLoading ? (
-            <FiLoader className="w-5 h-5 animate-spin" />
-          ) : isPlaying ? (
-            <FiPause className="w-5 h-5" />
-          ) : (
-            <FiPlay className="w-5 h-5" />
-          )}
-          <span>{isPlaying ? 'Tsayar' : 'Kunna'}</span>
-        </button>
-
+        </div>
+        
         {/* Speed Control */}
         <div className="flex items-center gap-2">
-          <label className="font-mono text-sm text-gray-700 dark:text-gray-300 font-medium">
-            Sauri:
-          </label>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Sauri:</span>
           <select
             value={speed}
             onChange={(e) => handleSpeedChange(Number(e.target.value))}
             disabled={isLoading}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="0.5">0.5x</option>
-            <option value="0.75">0.75x</option>
-            <option value="1">1x</option>
-            <option value="1.25">1.25x</option>
-            <option value="1.5">1.5x</option>
-            <option value="1.75">1.75x</option>
-            <option value="2">2x</option>
-          </select>
-        </div>
-
-        {/* Pitch Control */}
-        <div className="flex items-center gap-2">
-          <label className="font-mono text-sm text-gray-700 dark:text-gray-300 font-medium">
-            Sautin:
-          </label>
-          <select
-            value={pitch}
-            onChange={(e) => setPitch(Number(e.target.value))}
-            disabled={isLoading || isReady}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <option value="0.5">Ƙasa</option>
-            <option value="0.75">Dan Ƙasa</option>
-            <option value="1">Matsakaici</option>
-            <option value="1.25">Dan Sama</option>
-            <option value="1.5">Sama</option>
+            <option value={0.5}>0.5x</option>
+            <option value={0.75}>0.75x</option>
+            <option value={1}>1x</option>
+            <option value={1.25}>1.25x</option>
+            <option value={1.5}>1.5x</option>
+            <option value={2}>2x</option>
           </select>
         </div>
       </div>
 
-      {/* Info Note */}
-      <div className="mt-4 p-3 bg-blue-100 dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-gray-700">
-        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
-          <strong className="font-mono">Lura:</strong> Ana amfani da fasahar karanta rubutu ta zamani. 
-          Sauti zai ajiye a memory don saurin amfani nan gaba.
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-2">
+          <FiAlertCircle className="text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+        </div>
+      )}
+
+      {/* Waveform */}
+      <div ref={waveformRef} className="mb-4 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700" />
+
+      {/* Progress Bar (during generation) */}
+      {isLoading && progress > 0 && (
+        <div className="mb-4">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-blue-600 h-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+            Ana samar da sauti... {progress}%
+          </p>
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="flex items-center gap-4">
+        {/* Play/Pause Button */}
+        <button
+          onClick={togglePlayPause}
+          disabled={isLoading}
+          className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 transform hover:scale-105 active:scale-95"
+          aria-label={isPlaying ? 'Tsai da sauti' : 'Kunna sauti'}
+        >
+          {isLoading ? (
+            <FiLoader className="text-xl animate-spin" />
+          ) : isPlaying ? (
+            <FiPause className="text-xl" />
+          ) : (
+            <FiPlay className="text-xl ml-0.5" />
+          )}
+        </button>
+
+        {/* Time Display */}
+        <div className="flex-1">
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 font-mono">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Text */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          <strong>Bayani:</strong> Ana amfani da Meta's MMS-TTS don samar da sauti na Hausa. 
+          Sauti na farko yana ɗaukar ɗan lokaci kaɗan.
+          {!audioGenerated && ' Danna maɓallin kunnawa don farawa.'}
         </p>
       </div>
     </div>

@@ -1,174 +1,124 @@
 # Hausa Text-to-Speech (TTS) System Documentation
 
 ## Overview
-This document describes the Hausa Text-to-Speech system implemented in the Technologiya website. The system allows users to listen to articles in Hausa using browser-based speech synthesis.
 
-## Features
+The Technologiya website features an advanced **Hausa Text-to-Speech (TTS) system** powered by **Meta's MMS-TTS (Massively Multilingual Speech)** model. This system converts article text to authentic Hausa speech with professional quality.
 
-### 1. **Audio Playback with Waveform Visualization**
-- Real-time waveform display using WaveSurfer.js
-- Visual feedback of audio progress
-- Interactive waveform (users can click to seek)
-- Smooth animations and transitions
+## Technology Stack
 
-### 2. **Play/Pause Controls**
-- Large, accessible play/pause button
-- Visual feedback of current state
-- Keyboard-friendly interface
-- Loading spinner during audio generation
+- **TTS Engine**: Meta's MMS-TTS (`facebook/mms-tts-hau`)
+- **API**: Hugging Face Inference API
+- **Waveform Visualization**: WaveSurfer.js v7.11.0
+- **Framework**: React 19 with TypeScript
+- **Caching**: Browser localStorage for audio files
 
-### 3. **Audio Caching System**
-- Automatic caching of generated audio in localStorage
-- Cache key based on: `articleId`, `speed`, and `pitch`
-- Prevents regeneration of identical audio
-- Automatic cache cleanup when storage is full
-- Improves performance and reduces API calls
+## Key Features
+
+### 1. **Authentic Hausa Speech**
+- Uses Meta's MMS-TTS model specifically trained on Hausa language
+- Supports 1,100+ languages including proper Hausa pronunciation
+- Professional-quality voice synthesis
+
+### 2. **Waveform Visualizer**
+- Real-time audio waveform display using WaveSurfer.js
+- Visual feedback during playback
+- Progress tracking with time display
+
+### 3. **Play/Pause Controls**
+- Toggle between play and pause states
+- Resume from where you left off
+- Automatic reset when audio finishes
 
 ### 4. **Speed Adjustment**
-- 7 speed options: 0.5x, 0.75x, 1x, 1.25x, 1.5x, 1.75x, 2x
-- Real-time playback speed change
-- Cached separately per speed setting
-- Accessible via dropdown menu
+- Range: 0.5x to 2x playback speed
+- Options: 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x
+- Real-time speed changes without regenerating audio
 
-### 5. **Pitch Control**
-- 5 pitch levels with Hausa labels:
-  - Ƙasa (0.5 - Low)
-  - Dan Ƙasa (0.75 - Slightly Low)
-  - Matsakaici (1.0 - Normal)
-  - Dan Sama (1.25 - Slightly High)
-  - Sama (1.5 - High)
-- Must regenerate audio when pitch changes
-- Helps with accessibility and user preference
+### 5. **Audio Caching**
+- Caches generated audio in localStorage
+- Instant playback on subsequent visits
+- Automatic cache management when storage is full
 
-### 6. **Loading States**
-- Animated spinner during audio generation
-- Clear status messages in Hausa
-- Disabled controls during loading
-- User-friendly error messages
+### 6. **Loading Indicators**
+- Spinner animation during audio generation
+- Progress bar showing generation status (0-100%)
+- User-friendly loading messages in Hausa
 
-## Technical Implementation
+### 7. **Error Handling**
+- Clear error messages in Hausa
+- Graceful fallback if generation fails
+- Retry capability
+
+## Component Structure
 
 ### Component: `HausaTTS.tsx`
 
-#### Props
+**Location**: `/src/components/HausaTTS.tsx`
+
+**Props**:
 ```typescript
 interface HausaTTSProps {
-  text: string;      // Article HTML content
+  text: string;      // Article content (HTML or plain text)
   articleId: string; // Unique identifier for caching
+  apiKey?: string;   // Optional Hugging Face API key
 }
 ```
 
-#### Key Technologies
-- **React Hooks**: useState, useEffect, useRef
-- **WaveSurfer.js v7.11.0**: Audio waveform visualization
-- **Web Speech API**: Browser-native text-to-speech
-- **localStorage**: Client-side audio caching
-- **MediaRecorder API**: Recording synthesized speech
+**State Variables**:
+- `isPlaying`: Current playback state
+- `isLoading`: Audio generation in progress
+- `duration`: Total audio duration
+- `currentTime`: Current playback position
+- `speed`: Playback speed multiplier
+- `error`: Error message if generation fails
+- `audioGenerated`: Whether audio has been generated
+- `progress`: Generation progress percentage (0-100)
 
-#### State Management
+## Technical Implementation
+
+### 1. Hugging Face Client Initialization
 ```typescript
-const [isPlaying, setIsPlaying] = useState(false);
-const [isLoading, setIsLoading] = useState(false);
-const [duration, setDuration] = useState(0);
-const [currentTime, setCurrentTime] = useState(0);
-const [speed, setSpeed] = useState(1);
-const [pitch, setPitch] = useState(1);
-const [isReady, setIsReady] = useState(false);
+const hfClient = new HfInference(apiKey);
 ```
 
-### Audio Generation Flow
+### 2. Audio Generation Flow
+1. Check localStorage cache for existing audio
+2. If not cached, extract clean text from HTML
+3. Limit text to 1000 characters for optimal performance
+4. Call MMS-TTS API with `facebook/mms-tts-hau` model
+5. Convert response to ArrayBuffer
+6. Cache audio as base64 in localStorage
+7. Load audio into WaveSurfer for visualization
 
-1. **Check Cache**
-   - Generate cache key: `tts_${articleId}_${speed}_${pitch}`
-   - Check localStorage for existing audio
-   - If found, load directly into WaveSurfer
+### 3. Caching Strategy
+- **Cache Key**: `tts_mms_${articleId}`
+- **Format**: Base64-encoded audio data
+- **Storage**: Browser localStorage
+- **Auto-cleanup**: Removes oldest entry if storage is full
 
-2. **Generate New Audio** (if not cached)
-   - Clean HTML tags from article content
-   - Limit text to 5000 characters
-   - Create `SpeechSynthesisUtterance` with Hausa locale (`ha-NG`)
-   - Set speed and pitch parameters
-   - Try to find Hausa or Yoruba voice (regional fallback)
-   - Record audio using MediaRecorder
-   - Convert to Blob and create object URL
+### 4. Text Processing
+- Extracts clean text from HTML using DOM manipulation
+- Removes HTML tags and special characters
+- Limits text length to 1000 characters (optimal for MMS-TTS)
 
-3. **Cache Audio**
-   - Convert Blob to base64 string
-   - Store in localStorage with cache key
-   - Handle storage quota errors gracefully
-   - Remove oldest TTS cache if storage full
-
-4. **Load into WaveSurfer**
-   - Load audio URL into waveform visualizer
-   - Display duration and enable controls
-   - Allow playback and seeking
-
-### Caching Strategy
-
-#### Cache Key Format
-```
-tts_${articleId}_${speed}_${pitch}
+### 5. Waveform Visualization
+```typescript
+WaveSurfer.create({
+  container: waveformRef.current,
+  waveColor: '#60a5fa',
+  progressColor: '#2563eb',
+  cursorColor: '#1e40af',
+  barWidth: 2,
+  height: 80,
+});
 ```
 
-#### Example Cache Keys
-- `tts_1_1_1` - Article 1, normal speed, normal pitch
-- `tts_2_1.5_1` - Article 2, 1.5x speed, normal pitch
-- `tts_1_1_0.75` - Article 1, normal speed, low pitch
+## Usage
 
-#### Cache Management
-- Stored as base64-encoded audio data
-- Automatic cleanup on quota exceeded
-- Removes oldest TTS entries first (FIFO)
-- Separate cache per speed/pitch combination
+### Integration in Article Pages
 
-### Browser Compatibility
+The TTS component is integrated into article detail pages (`/src/pages/articles/[slug].astro`):
 
-#### Required APIs
-- ✅ Web Speech API (speechSynthesis)
-- ✅ MediaRecorder API
-- ✅ AudioContext
-- ✅ localStorage
-- ✅ Blob and FileReader
-
-#### Supported Browsers
-- Chrome/Edge: Full support
-- Safari: Full support (iOS 14.5+)
-- Firefox: Full support
-- Opera: Full support
-
-#### Fallbacks
-- Shows alert if Web Speech API not available
-- Yoruba voice used if Hausa voice not found
-- System default voice as final fallback
-
-## User Interface
-
-### Visual Design
-- Gradient background: Blue/Indigo in light mode, Gray in dark mode
-- Prominent icon and heading in Hausa
-- Clean, modern controls with monospace fonts
-- Responsive layout for mobile devices
-
-### Hausa Translations
-- **Saurari Labarin** - Listen to Article
-- **Kunna** - Play
-- **Tsayar** - Pause
-- **Sauri** - Speed
-- **Sautin** - Pitch (Voice)
-- **Ana shirya sauti...** - Preparing audio...
-- **Danna maballin kunnawa don fara** - Press play button to start
-- **Lura** - Note/Attention
-
-### Accessibility
-- ARIA labels for icon buttons
-- Keyboard navigation support
-- High contrast colors
-- Clear loading states
-- Error messages in Hausa
-
-## Usage in Article Pages
-
-### Integration
 ```astro
 ---
 import HausaTTS from '../../components/HausaTTS';
@@ -176,112 +126,192 @@ import HausaTTS from '../../components/HausaTTS';
 
 <HausaTTS 
   text={article.content} 
-  articleId={article.id}
+  articleId={article.id} 
   client:load 
 />
 ```
 
-### Placement
-- Positioned after article header
-- Before main article content
-- Prominent but not intrusive
-- Easy to skip for users who don't need it
+### With Custom API Key (Optional)
 
-## Performance Considerations
+For production use, you can provide your own Hugging Face API key:
 
-### Optimizations
-1. **Lazy Loading**: Component loads only when needed
-2. **Text Limiting**: Max 5000 characters prevents long generation times
-3. **Caching**: Reduces redundant API calls and generation
-4. **Efficient State**: Minimal re-renders with proper hooks
-5. **Audio Cleanup**: Proper disposal of audio contexts
+```astro
+<HausaTTS 
+  text={article.content} 
+  articleId={article.id}
+  apiKey="your_huggingface_api_key"
+  client:load 
+/>
+```
 
-### Memory Usage
-- WaveSurfer instance destroyed on unmount
-- Audio blobs cleaned up properly
-- localStorage cache managed efficiently
-- Old cache entries removed when needed
+**Note**: The free Hugging Face Inference API works without an API key but may have rate limits. For production use, get a free API key from [huggingface.co](https://huggingface.co/settings/tokens).
 
-## Future Enhancements
+### User Interface Elements
 
-### Potential Features
-1. **Cloud TTS Integration**: Use Azure/Google Cloud for better Hausa voices
-2. **Offline Support**: Service worker for offline audio playback
-3. **Playlist Mode**: Auto-play related articles
-4. **Download Audio**: Allow users to download MP3 files
-5. **Bookmarks**: Save playback position across sessions
-6. **Keyboard Shortcuts**: Space to play/pause, arrow keys to seek
-7. **Transcript Highlighting**: Highlight currently spoken text
-8. **Multiple Voices**: Let users choose from available voices
-9. **Background Playback**: Continue playing when scrolling
-10. **Analytics**: Track TTS usage and popular articles
+**Hausa Translations**:
+- **Kunna Sauti**: Turn on audio
+- **Tsai da sauti**: Stop audio  
+- **Sauri**: Speed
+- **Bayani**: Information
+- **Ana samar da sauti...**: Generating audio...
+- **Ba a iya samar da sauti**: Cannot generate audio
 
-### Appwrite Integration (Future)
-When Appwrite backend is integrated:
-- Store generated audio files in Appwrite Storage
-- Serve cached audio from CDN
-- Track TTS usage statistics
-- Pre-generate audio for popular articles
-- Admin dashboard for TTS analytics
+## Browser Compatibility
+
+### Supported Browsers
+- ✅ Chrome/Edge 90+ (Best performance)
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Opera 76+
+
+### Requirements
+- Modern browser with localStorage support
+- Internet connection for first-time audio generation
+- ~1-2MB storage per article for cached audio
+
+## API & Model Information
+
+### Hugging Face MMS-TTS Model
+- **Model ID**: `facebook/mms-tts-hau`
+- **Languages**: 1,100+ languages including Hausa
+- **Provider**: Meta AI Research
+- **License**: CC-BY-NC 4.0
+- **Paper**: [Scaling Speech Technology to 1,000+ Languages](https://arxiv.org/abs/2305.13516)
+
+### Rate Limits
+- **Free API**: ~1000 requests/day (without API key)
+- **With API Key**: Higher limits based on account tier
+- **Recommended**: Use caching to minimize API calls
+
+## Performance Optimization
+
+### 1. Text Length Limiting
+- Maximum 1000 characters per generation
+- Prevents long generation times
+- Maintains quality and naturalness
+
+### 2. Intelligent Caching
+- First visit: ~2-5 seconds generation time
+- Subsequent visits: Instant playback
+- Cache persists across browser sessions
+
+### 3. Progress Indicators
+- Real-time progress updates (0-100%)
+- User feedback during generation
+- Prevents multiple simultaneous requests
 
 ## Troubleshooting
 
-### Common Issues
+### Issue: "Ba a iya samar da sauti" Error
 
-#### 1. Audio Not Playing
-- **Cause**: Browser doesn't support Web Speech API
-- **Solution**: Check browser compatibility, update browser
+**Possible Causes**:
+1. Network connectivity issues
+2. Hugging Face API rate limit exceeded
+3. Model temporarily unavailable
 
-#### 2. No Hausa Voice
-- **Cause**: System doesn't have Hausa voices installed
-- **Solution**: System uses default voice, consider cloud TTS
+**Solutions**:
+- Check internet connection
+- Wait a few minutes and retry
+- Provide API key for higher rate limits
+- Check browser console for detailed error messages
 
-#### 3. Cache Not Working
-- **Cause**: localStorage disabled or full
-- **Solution**: Component handles gracefully, regenerates audio
+### Issue: Audio Not Playing
 
-#### 4. Slow Generation
-- **Cause**: Long article text (>5000 chars)
-- **Solution**: Text automatically truncated to 5000 characters
+**Possible Causes**:
+1. Browser autoplay restrictions
+2. Audio generation not completed
+3. WaveSurfer not initialized
 
-#### 5. Pitch Not Changing
-- **Cause**: Need to regenerate audio for pitch changes
-- **Solution**: Click play again after changing pitch
+**Solutions**:
+- Click play button after audio generation completes
+- Ensure page is fully loaded
+- Check browser console for errors
 
-## Code Maintenance
+### Issue: Slow Audio Generation
 
-### File Locations
-- Component: `/src/components/HausaTTS.tsx`
-- Integration: `/src/pages/articles/[slug].astro`
-- Documentation: `/TTS_DOCUMENTATION.md`
+**Possible Causes**:
+1. Network speed
+2. Server load on Hugging Face
+3. Text length too long
 
-### Dependencies
-```json
-{
-  "wavesurfer.js": "^7.11.0",
-  "react": "^19.2.0",
-  "react-icons": "^5.5.0"
-}
+**Solutions**:
+- Be patient on first load (2-5 seconds normal)
+- Subsequent plays use cache (instant)
+- Component automatically limits text to 1000 chars
+
+## Future Enhancements
+
+### Planned Features
+1. ✅ ~~Authentic Hausa voice synthesis~~ (Implemented with MMS-TTS)
+2. 🔄 Download audio file button
+3. 🔄 Multiple voice selection (male/female when available)
+4. 🔄 Background playback while scrolling
+5. 🔄 Keyboard shortcuts (Space to play/pause)
+6. 🔄 Audio quality settings
+7. 🔄 Server-side caching with Appwrite Storage
+8. 🔄 Batch generation for all articles
+
+### Technical Improvements
+1. 🔄 Implement server-side audio generation
+2. 🔄 CDN distribution for cached audio files
+3. 🔄 Progressive audio loading for long articles
+4. 🔄 Improved error recovery mechanisms
+5. 🔄 Analytics for TTS usage tracking
+
+## Development Notes
+
+### Local Development
+```bash
+# Install dependencies
+bun install
+
+# Run dev server
+bun run dev
+
+# Test TTS component
+# Navigate to any article page (e.g., /articles/quantum-computing-breakthrough)
 ```
 
 ### Testing Checklist
-- [ ] Play/pause functionality works
-- [ ] Waveform displays correctly
-- [ ] Speed adjustment takes effect
-- [ ] Pitch changes regenerate audio
-- [ ] Caching works (check localStorage)
-- [ ] Loading states display properly
-- [ ] Error handling works
-- [ ] Mobile responsive
-- [ ] Dark mode styling correct
-- [ ] Hausa translations accurate
+- [ ] Audio generation works on first click
+- [ ] Cached audio loads instantly on second visit
+- [ ] Play/pause toggles correctly
+- [ ] Speed adjustment affects playback
+- [ ] Progress bar shows during generation
+- [ ] Error messages display properly
+- [ ] Waveform visualization renders correctly
+- [ ] Mobile responsive layout works
 
-## License & Credits
+## Security Considerations
 
-### Libraries Used
-- **WaveSurfer.js**: BSD-3-Clause License
-- **React Icons**: MIT License
-- **Web Speech API**: W3C Standard (browser-native)
+### API Key Management
+- Never commit API keys to version control
+- Use environment variables for production
+- Consider server-side proxy for API calls
 
-### Acknowledgments
-Built for Technologiya - Hausa Language Tech News Platform
+### Content Security Policy
+Ensure CSP allows:
+- `connect-src` for Hugging Face API
+- `media-src` for blob URLs
+- `script-src` for WaveSurfer.js
+
+### Data Privacy
+- Audio cached locally in user's browser
+- No audio sent to third-party servers after initial generation
+- Users control their own cache data
+
+## Credits
+
+- **MMS-TTS**: Meta AI Research
+- **WaveSurfer.js**: katspaugh and contributors
+- **Hugging Face**: Inference API platform
+- **React Icons**: react-icons community
+
+## License
+
+This TTS implementation is part of the Technologiya project. The MMS-TTS model is licensed under CC-BY-NC 4.0 by Meta AI Research.
+
+---
+
+**Last Updated**: October 18, 2025  
+**Component Version**: 2.0 (MMS-TTS Implementation)

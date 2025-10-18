@@ -5,6 +5,7 @@
       "name": "technologiya",
       "dependencies": {
         "@astrojs/react": "^4.4.0",
+        "@huggingface/inference": "^4.11.3",
         "@tailwindcss/vite": "^4.1.14",
         "astro": "^5.14.6",
         "dayjs": "^1.11.18",
@@ -122,6 +123,12 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.25.11", "", { "os": "win32", "cpu": "ia32" }, "sha512-3ukss6gb9XZ8TlRyJlgLn17ecsK4NSQTmdIXRASVsiS2sQ6zPPZklNJT5GR5tE/MUarymmy8kCEf5xPCNCqVOA=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.11", "", { "os": "win32", "cpu": "x64" }, "sha512-D7Hpz6A2L4hzsRpPaCYkQnGOotdUpDzSGRIv9I+1ITdHROSFUWW95ZPZWQmGka1Fg7W3zFJowyn9WGwMJ0+KPA=="],
+
+    "@huggingface/inference": ["@huggingface/inference@4.11.3", "", { "dependencies": { "@huggingface/jinja": "^0.5.1", "@huggingface/tasks": "^0.19.52" } }, "sha512-Fqpj89DuB6i9j+cos9i0bfUKlpx5NFFsmvED0OAdE1gUSTHR86GpUZ0xkKy58IYXV1yFyHLFxQaOn0XDmD2m7Q=="],
+
+    "@huggingface/jinja": ["@huggingface/jinja@0.5.1", "", {}, "sha512-yUZLld4lrM9iFxHCwFQ7D1HW2MWMwSbeB7WzWqFYDWK+rEb+WldkLdAJxUPOmgICMHZLzZGVcVjFh3w/YGubng=="],
+
+    "@huggingface/tasks": ["@huggingface/tasks@0.19.56", "", {}, "sha512-sULqkRk5V6f39+N6MfpxjJklr9KrnIsJx5RyxkhNdTKQfn6ZRDBLoWBVJx4e4F67yelh7zzyBOfCS5MI14jRgA=="],
 
     "@img/colour": ["@img/colour@1.0.0", "", {}, "sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw=="],
 
