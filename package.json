@@ -11,6 +11,13 @@
   "dependencies": {
     "@astrojs/react": "^4.4.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@tiptap/extension-image": "^3.7.2",
+    "@tiptap/extension-link": "^3.7.2",
+    "@tiptap/extension-placeholder": "^3.7.2",
+    "@tiptap/extension-text-align": "^3.7.2",
+    "@tiptap/extension-underline": "^3.7.2",
+    "@tiptap/react": "^3.7.2",
+    "@tiptap/starter-kit": "^3.7.2",
     "astro": "^5.14.6",
     "dayjs": "^1.11.18",
     "react": "^19.2.0",
