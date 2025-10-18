@@ -1,16 +1,107 @@
 ---
+import MainLayout from '../layouts/MainLayout.astro';
+import ArticleCard from '../components/ArticleCard';
+import { mockArticles, getFeaturedArticles } from '../data/mockData';
+import { FiTrendingUp } from 'react-icons/fi';
 
+const featuredArticles = getFeaturedArticles();
+const latestArticles = mockArticles.slice(0, 6);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout 
+  title="Technologiya - Labaran Fasaha a Hausa"
+  description="Samun sabbin labarai game da wayoyi, manhajoji, da dabaru na fasaha a cikin Hausa"
+>
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- Hero Section with Featured Articles -->
+    {featuredArticles.length > 0 && (
+      <section class="mb-12">
+        <div class="flex items-center mb-6">
+          <FiTrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-2" />
+          <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Labarai Masu Muhimmanci
+          </h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featuredArticles.map((article) => (
+            <ArticleCard article={article} featured={true} client:visible />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Latest Articles Section -->
+    <section class="mb-12">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Sabbin Labarai
+        </h2>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {latestArticles.map((article) => (
+          <ArticleCard article={article} client:visible />
+        ))}
+      </div>
+    </section>
+
+    <!-- Load More Button -->
+    <div class="flex justify-center mt-8">
+      <button class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg">
+        Duba Ƙarin Labarai
+      </button>
+    </div>
+
+    <!-- Categories Quick Links -->
+    <section class="mt-16 py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          Rukunin Labarai
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400">
+          Zaɓi rukunin da kake so
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-6">
+        <a href="/category/wayoyi" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+          <div class="text-4xl mb-2">📱</div>
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            Wayoyi
+          </h3>
+        </a>
+        
+        <a href="/category/manhajoji" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+          <div class="text-4xl mb-2">💻</div>
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            Manhajoji
+          </h3>
+        </a>
+        
+        <a href="/category/bita" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+          <div class="text-4xl mb-2">⭐</div>
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            Bita
+          </h3>
+        </a>
+        
+        <a href="/category/dabaru" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+          <div class="text-4xl mb-2">💡</div>
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            Dabaru
+          </h3>
+        </a>
+        
+        <a href="/category/koyarwa" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+          <div class="text-4xl mb-2">📚</div>
+          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            Koyarwa
+          </h3>
+        </a>
+      </div>
+    </section>
+
+  </div>
+</MainLayout>

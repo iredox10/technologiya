@@ -1,0 +1,77 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import ArticleCard from '../../components/ArticleCard';
+import { getArticlesByCategory } from '../../data/mockData';
+import { CATEGORIES } from '../../types';
+
+export function getStaticPaths() {
+  return CATEGORIES.map((category) => ({
+    params: { slug: category.slug },
+    props: { category },
+  }));
+}
+
+const { category } = Astro.props;
+const articles = getArticlesByCategory(category.slug);
+---
+
+<MainLayout
+  title={`${category.name} - Technologiya`}
+  description={category.description || `Duk labaran ${category.name} a Technologiya`}
+>
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- Category Header -->
+    <header class="mb-12 text-center">
+      <div class="inline-block px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-semibold mb-4">
+        Rukuni
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        {category.name}
+      </h1>
+      {category.description && (
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          {category.description}
+        </p>
+      )}
+      <div class="mt-6 text-sm text-gray-500 dark:text-gray-500">
+        {articles.length} {articles.length === 1 ? 'labari' : 'labarai'}
+      </div>
+    </header>
+
+    <!-- Articles Grid -->
+    {articles.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {articles.map((article) => (
+          <ArticleCard article={article} client:visible />
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-16">
+        <p class="text-xl text-gray-600 dark:text-gray-400">
+          Babu labarai a wannan rukuni a halin yanzu.
+        </p>
+      </div>
+    )}
+
+    <!-- Browse Other Categories -->
+    <section class="mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">
+        Duba Sauran Rukunin
+      </h2>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {CATEGORIES.filter(cat => cat.slug !== category.slug).map((cat) => (
+          <a 
+            href={`/category/${cat.slug}`}
+            class="group p-6 bg-white dark:bg-gray-800 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-200 dark:border-gray-700"
+          >
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              {cat.name}
+            </h3>
+          </a>
+        ))}
+      </div>
+    </section>
+
+  </div>
+</MainLayout>
