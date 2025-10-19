@@ -38,7 +38,7 @@ export default function AuthorSidebar() {
   const handleLogout = () => {
     // TODO: Implement Appwrite logout
     console.log('Logging out...');
-    window.location.href = '/author/login';
+    window.location.href = '/login';
   };
 
   return (

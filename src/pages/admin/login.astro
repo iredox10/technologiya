@@ -1,8 +1,4 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import AdminLogin from '../../components/admin/AdminLogin';
+// Redirect to unified login page
+return Astro.redirect('/login');
 ---
-
-<BaseLayout title="Shiga - Admin">
-  <AdminLogin client:load />
-</BaseLayout>

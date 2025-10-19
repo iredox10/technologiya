@@ -1,8 +1,4 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import AuthorLogin from '../../components/author/AuthorLogin';
+// Redirect to unified login page
+return Astro.redirect('/login');
 ---
-
-<BaseLayout title="Shiga - Marubuta">
-  <AuthorLogin client:load />
-</BaseLayout>
