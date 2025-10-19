@@ -1,0 +1,8 @@
+---
+import AuthorLayout from '../../layouts/AuthorLayout.astro';
+import AuthorArticlesList from '../../components/author/AuthorArticlesList';
+---
+
+<AuthorLayout title="Labaran Na">
+  <AuthorArticlesList client:load />
+</AuthorLayout>

@@ -1,0 +1,31 @@
+---
+import AuthorLayout from '../../../../layouts/AuthorLayout.astro';
+import ArticleEditor from '../../../../components/admin/ArticleEditor';
+import { getArticleBySlug } from '../../../../data/mockData';
+
+export function getStaticPaths() {
+  // Mock articles for author - will be replaced with Appwrite query
+  const mockArticles = [
+    { id: '1', slug: 'karfin-fasahar-ai' },
+    { id: '2', slug: 'wayoyin-dijital' },
+    { id: '3', slug: 'garin-kano' },
+    { id: '4', slug: 'manhajoji' },
+  ];
+
+  return mockArticles.map((article) => ({
+    params: { id: article.id },
+    props: { articleSlug: article.slug },
+  }));
+}
+
+const { articleSlug } = Astro.props;
+const article = getArticleBySlug(articleSlug);
+
+if (!article) {
+  return Astro.redirect('/author/articles');
+}
+---
+
+<AuthorLayout title={`Gyara: ${article.title}`}>
+  <ArticleEditor article={article} isEditing={true} client:load />
+</AuthorLayout>
