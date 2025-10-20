@@ -9,6 +9,7 @@ import {
   FiPlusCircle,
   FiLogOut
 } from 'react-icons/fi';
+import { authService } from '../../lib/appwriteServices';
 
 interface NavItem {
   name: string;
@@ -35,10 +36,15 @@ export default function AuthorSidebar() {
     { name: 'Bayanai Na', href: '/author/profile', icon: FiUser },
   ];
 
-  const handleLogout = () => {
-    // TODO: Implement Appwrite logout
-    console.log('Logging out...');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
+    }
   };
 
   return (

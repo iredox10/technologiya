@@ -1,12 +1,43 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import AuthorSidebar from '../components/author/AuthorSidebar';
+import { authService, authorService } from '../lib/appwriteServices';
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+
+// Check authentication
+const isAuthenticated = await authService.isAuthenticated();
+if (!isAuthenticated) {
+  return Astro.redirect('/login');
+}
+
+// Get current user
+const userResult = await authService.getCurrentUser();
+if (!userResult.success || !userResult.data) {
+  return Astro.redirect('/login');
+}
+
+// Check if user is an author/admin
+const userId = userResult.data.$id;
+const authorResult = await authorService.getAuthorByUserId(userId);
+if (!authorResult.success || !authorResult.data) {
+  return Astro.redirect('/login');
+}
+
+// Check if author is active
+const author = authorResult.data;
+if (author.status !== 'active') {
+  return Astro.redirect('/login');
+}
+
+// Authors and admins can access this layout
+if (author.role !== 'author' && author.role !== 'admin') {
+  return Astro.redirect('/login');
+}
 ---
 
 <BaseLayout title={title}>

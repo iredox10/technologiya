@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiEdit, FiShield, FiUsers } from 'react-icons/fi';
+import { authService, authorService } from '../lib/appwriteServices';
 
 export default function UnifiedLogin() {
   const [email, setEmail] = useState('');
@@ -13,25 +14,64 @@ export default function UnifiedLogin() {
     setIsLoading(true);
     setError('');
 
-    // TODO: Implement Appwrite authentication with role detection
-    console.log('Login attempt:', { email, password });
+    try {
+      // 1. Login with Appwrite
+      const loginResult = await authService.login(email, password);
+      
+      if (!loginResult.success) {
+        setError(loginResult.error || 'Imel ko kalmar sirri ba daidai ba ne');
+        setIsLoading(false);
+        return;
+      }
 
-    // Mock login with role detection
-    setTimeout(() => {
-      // Check if admin
-      if (email === 'admin@technologiya.com' && password === 'admin123') {
+      // 2. Get current user
+      const userResult = await authService.getCurrentUser();
+      
+      if (!userResult.success || !userResult.data) {
+        setError('An samu matsala wajen samun bayanan mai amfani');
+        setIsLoading(false);
+        return;
+      }
+
+      const userId = userResult.data.$id;
+
+      // 3. Check if user is an author
+      const authorResult = await authorService.getAuthorByUserId(userId);
+      
+      if (!authorResult.success || !authorResult.data) {
+        // Not an author/admin - redirect to user login
+        await authService.logout();
+        setError('Ba kai admin ko marubuta ba ne. Don Allah yi amfani da shafin mai karanta.');
+        setIsLoading(false);
+        return;
+      }
+
+      const author = authorResult.data;
+
+      // 4. Check if author is active
+      if (author.status !== 'active') {
+        await authService.logout();
+        setError('Asusun ka ba aiki ba ne. Don Allah tuntubi admin.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 5. Redirect based on role
+      if (author.role === 'admin') {
         window.location.href = '/admin';
-      }
-      // Check if author
-      else if (email === 'musa@technologiya.com' && password === 'author123') {
+      } else if (author.role === 'author') {
         window.location.href = '/author';
-      }
-      // Invalid credentials
-      else {
-        setError('Imel ko kalmar sirri ba daidai ba ne');
+      } else {
+        await authService.logout();
+        setError('Ba kai admin ko marubuta ba ne.');
         setIsLoading(false);
       }
-    }, 1000);
+
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError('An samu matsala wajen shiga. Don Allah sake gwadawa.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -152,38 +192,19 @@ export default function UnifiedLogin() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Info Message */}
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs font-medium text-center text-gray-700 dark:text-gray-300 mb-3">
-              Demo Accounts:
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Admin Card */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <FiShield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">ADMIN</span>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <div className="flex gap-3">
+                <FiShield className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">
+                    Shafin Admin & Marubuta
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-400">
+                    Don Allah yi amfani da imel da kalmar sirrin da aka ba ku. Idan ba ku da asusu, don Allah tuntubi admin.
+                  </p>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 break-all">
-                  admin@technologiya.com
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  admin123
-                </p>
-              </div>
-
-              {/* Author Card */}
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <FiUsers className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">AUTHOR</span>
-                </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 break-all">
-                  musa@technologiya.com
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  author123
-                </p>
               </div>
             </div>
           </div>

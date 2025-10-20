@@ -8,8 +8,10 @@ import {
   FiMenu,
   FiX,
   FiEdit,
-  FiPlusCircle
+  FiPlusCircle,
+  FiLogOut
 } from 'react-icons/fi';
+import { authService } from '../../lib/appwriteServices';
 
 interface NavItem {
   name: string;
@@ -35,6 +37,17 @@ export default function AdminSidebar() {
     const section = href.split('/').pop() || 'dashboard';
     setActiveSection(section);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -107,7 +120,7 @@ export default function AdminSidebar() {
 
         {/* User Section */}
         <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
               A
             </div>
@@ -120,6 +133,15 @@ export default function AdminSidebar() {
               </p>
             </div>
           </div>
+          
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+          >
+            <FiLogOut className="w-4 h-4" />
+            <span>Fita</span>
+          </button>
         </div>
       </aside>
 
