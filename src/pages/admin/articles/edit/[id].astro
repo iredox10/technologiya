@@ -2,6 +2,11 @@
 import AdminLayout from '../../../../layouts/AdminLayout.astro';
 import ArticleEditor from '../../../../components/admin/ArticleEditor';
 
+// Return empty array - pages will be generated on-demand in dev mode
+export function getStaticPaths() {
+  return [];
+}
+
 const { id } = Astro.params;
 
 if (!id) {
