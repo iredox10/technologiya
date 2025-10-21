@@ -1,79 +1,111 @@
 import { useState, useEffect } from 'react';
 import { FiSave, FiEye, FiUpload, FiX } from 'react-icons/fi';
+import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import { articleService, categoryService, authorService, storageService } from '../../lib/appwriteServices';
+import type { Article, Category, Author } from '../../types';
 import RichTextEditor from './RichTextEditor';
-
-interface Article {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  category: { name: string; slug: string };
-  tags: string[];
-  coverImage: string;
-  status: 'draft' | 'published';
-  author: { name: string };
-}
 
 interface ArticleFormData {
   title: string;
   slug: string;
   excerpt: string;
   content: string;
-  category: string;
+  categoryId: string;
+  authorId: string;
   tags: string[];
   coverImage: string;
-  status: 'draft' | 'published';
-  author: string;
+  coverImageFile: File | null;
+  status: 'draft' | 'published' | 'archived';
+  featured: boolean;
 }
 
 interface ArticleEditorProps {
-  article?: Article;
+  articleId?: string;
   isEditing?: boolean;
 }
 
-export default function ArticleEditor({ article, isEditing = false }: ArticleEditorProps) {
+export default function ArticleEditor({ articleId, isEditing = false }: ArticleEditorProps) {
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     slug: '',
     excerpt: '',
     content: '',
-    category: '',
+    categoryId: '',
+    authorId: '',
     tags: [],
     coverImage: '',
+    coverImageFile: null,
     status: 'draft',
-    author: 'Musa Ibrahim',
+    featured: false,
   });
 
-  // Load article data if editing
-  useEffect(() => {
-    if (article && isEditing) {
-      setFormData({
-        title: article.title,
-        slug: article.slug,
-        excerpt: article.excerpt,
-        content: article.content,
-        category: article.category.name,
-        tags: article.tags,
-        coverImage: article.coverImage,
-        status: article.status,
-        author: article.author.name,
-      });
-    }
-  }, [article, isEditing]);
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const categories = [
-    'Wayoyi',
-    'AI & Machine Learning',
-    'Hanyoyin Sadarwa',
-    'Kimiyya & Fasaha',
-    'Manhajoji',
-    'Amfani da Intanet',
-  ];
+  // Fetch categories and authors
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesResult, authorsResult] = await Promise.all([
+          categoryService.getCategories(),
+          authorService.getAuthors()
+        ]);
+
+        if (categoriesResult.success && categoriesResult.data) {
+          setCategories(categoriesResult.data.documents as unknown as Category[]);
+        }
+
+        if (authorsResult.success && authorsResult.data) {
+          setAuthors(authorsResult.data.documents as unknown as Author[]);
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        showErrorToast('An samu kuskure wajen ɗaukar bayanai');
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Load article data if editing
+  useEffect(() => {
+    if (articleId && isEditing) {
+      const fetchArticle = async () => {
+        try {
+          const result = await articleService.getArticle(articleId);
+          
+          if (result.success && result.data) {
+            const article = result.data as unknown as Article;
+            setFormData({
+              title: article.title,
+              slug: article.slug,
+              excerpt: article.excerpt,
+              content: article.content,
+              categoryId: article.categoryId,
+              authorId: article.authorId,
+              tags: article.tags || [],
+              coverImage: article.coverImage || '',
+              coverImageFile: null,
+              status: article.status,
+              featured: article.featured || false,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching article:', error);
+          showErrorToast('An samu kuskure wajen ɗaukar labarin');
+        }
+      };
+
+      fetchArticle();
+    }
+  }, [articleId, isEditing]);
 
   const generateSlug = (title: string) => {
     return title
@@ -110,30 +142,103 @@ export default function ArticleEditor({ article, isEditing = false }: ArticleEdi
     });
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showErrorToast('Da fatan za a zaɓi hoton kawai');
+        return;
+      }
+      
+      // Validate file size (max 10MB for article images)
+      if (file.size > 10 * 1024 * 1024) {
+        showErrorToast('Hoton ya yi girma da yawa. Matsakaicin girman shine 10MB');
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        coverImageFile: file,
+        coverImage: URL.createObjectURL(file),
+      });
+    }
+  };
+
   const handleSave = async (publish: boolean) => {
     setIsSaving(true);
     
     // Validation
-    if (!formData.title || !formData.content || !formData.category) {
-      alert('Da fatan za a cika dukkan filayen masu mahimmanci');
+    if (!formData.title || !formData.content || !formData.categoryId || !formData.authorId) {
+      showErrorToast('Da fatan za a cika dukkan filayen masu mahimmanci');
       setIsSaving(false);
       return;
     }
 
-    const dataToSave = {
-      ...formData,
-      status: publish ? 'published' : 'draft',
-    };
+    try {
+      let coverImageUrl = formData.coverImage;
+      
+      // Upload cover image if a new file is provided
+      if (formData.coverImageFile) {
+        const bucketId = import.meta.env.PUBLIC_APPWRITE_BUCKET_ARTICLE_IMAGES;
+        const uploadResult = await storageService.uploadFile(bucketId, formData.coverImageFile);
+        
+        if (uploadResult.success && uploadResult.data) {
+          // Get the file preview URL
+          coverImageUrl = storageService.getFilePreview(bucketId, uploadResult.data.$id, 800, 400);
+        } else {
+          console.error('Failed to upload cover image:', uploadResult.error);
+          showErrorToast('An samu kuskure wajen loda hoton');
+          setIsSaving(false);
+          return;
+        }
+      }
 
-    console.log('Saving article:', dataToSave);
-    
-    // Will implement Appwrite save later
-    setTimeout(() => {
+      const articleData = {
+        title: formData.title,
+        slug: formData.slug,
+        excerpt: formData.excerpt,
+        content: formData.content,
+        categoryId: formData.categoryId,
+        authorId: formData.authorId,
+        tags: formData.tags.length > 0 ? formData.tags : [], // Send empty array if no tags
+        coverImage: coverImageUrl || '', // Ensure it's a string, not undefined
+        status: publish ? ('published' as const) : ('draft' as const),
+        featured: formData.featured,
+        views: 0,
+      };
+
+      if (isEditing && articleId) {
+        // Update existing article
+        const result = await articleService.updateArticle(articleId, articleData);
+        
+        if (result.success) {
+          showSuccessToast(publish ? 'An buga labarin!' : 'An sabunta daftarin!');
+          setTimeout(() => {
+            window.location.href = '/admin/articles';
+          }, 1500);
+        } else {
+          showErrorToast('An samu kuskure wajen sabunta labarin: ' + result.error);
+        }
+      } else {
+        // Create new article
+        const result = await articleService.createArticle(articleData);
+        
+        if (result.success) {
+          showSuccessToast(publish ? 'An buga labarin!' : 'An adana a matsayin daftari!');
+          setTimeout(() => {
+            window.location.href = '/admin/articles';
+          }, 1500);
+        } else {
+          showErrorToast('An samu kuskure wajen ƙara labarin: ' + result.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving article:', error);
+      showErrorToast('An samu kuskure wajen adana labarin');
+    } finally {
       setIsSaving(false);
-      alert(publish ? 'An buga labarin!' : 'An adana a matsayin daftari!');
-      // Redirect to articles list
-      // window.location.href = '/admin/articles';
-    }, 1000);
+    }
   };
 
   return (
@@ -244,58 +349,77 @@ export default function ArticleEditor({ article, isEditing = false }: ArticleEdi
                 Kalma *
               </label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Zaɓi kalma...</option>
                 {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
+                  <option key={cat.$id} value={cat.$id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Tags */}
+            {/* Author */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Alamomi
+                Marubucin *
               </label>
-              <div className="flex space-x-2 mb-3">
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                  placeholder="Rubuta alama..."
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={handleAddTag}
-                  type="button"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
-                >
-                  Ƙara
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm"
-                  >
-                    <span>#{tag}</span>
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      type="button"
-                      className="hover:text-blue-900 dark:hover:text-blue-100"
-                    >
-                      <FiX className="w-3 h-3" />
-                    </button>
-                  </span>
+              <select
+                value={formData.authorId}
+                onChange={(e) => setFormData({ ...formData, authorId: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Zaɓi marubucin...</option>
+                {authors.map((author) => (
+                  <option key={author.$id} value={author.$id}>
+                    {author.name}
+                  </option>
                 ))}
-              </div>
+              </select>
+            </div>
+          </div>
+
+          {/* Tags Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Alamomi
+            </label>
+            <div className="flex space-x-2 mb-3">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                placeholder="Rubuta alama..."
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleAddTag}
+                type="button"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+              >
+                Ƙara
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {formData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                >
+                  <span>#{tag}</span>
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    type="button"
+                    className="hover:text-blue-900 dark:hover:text-blue-100"
+                  >
+                    <FiX className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
             </div>
           </div>
 
@@ -304,31 +428,65 @@ export default function ArticleEditor({ article, isEditing = false }: ArticleEdi
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Hoton Murfin
             </label>
-            <div className="flex items-center space-x-4">
-              <input
-                type="text"
-                value={formData.coverImage}
-                onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors space-x-2"
-              >
-                <FiUpload className="w-4 h-4" />
-                <span>Loda Hoto</span>
-              </button>
-            </div>
-            {formData.coverImage && (
-              <div className="mt-4">
-                <img
-                  src={formData.coverImage}
-                  alt="Preview"
-                  className="max-w-sm rounded-lg border border-gray-200 dark:border-gray-700"
-                />
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <label className="flex-1 cursor-pointer">
+                  <div className="flex items-center justify-center px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 transition-colors">
+                    <div className="text-center">
+                      <FiUpload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Danna don zaɓar hoto ko ja shi nan
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        PNG, JPG, WEBP har zuwa 10MB
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
               </div>
-            )}
+              {formData.coverImage && (
+                <div className="relative">
+                  <img
+                    src={formData.coverImage}
+                    alt="Preview"
+                    className="w-full max-h-96 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, coverImage: '', coverImageFile: null })}
+                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Featured Article Toggle */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Labari Mai Muhimmanci
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Nuna wannan labarin a babban shafi
+                </p>
+              </div>
+            </label>
           </div>
         </div>
       ) : (
@@ -336,10 +494,10 @@ export default function ArticleEditor({ article, isEditing = false }: ArticleEdi
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
           <div className="max-w-3xl mx-auto">
             {/* Category Badge */}
-            {formData.category && (
+            {formData.categoryId && categories.find(c => c.$id === formData.categoryId) && (
               <div className="mb-4">
                 <span className="inline-block px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 rounded-full">
-                  {formData.category}
+                  {categories.find(c => c.$id === formData.categoryId)?.name}
                 </span>
               </div>
             )}

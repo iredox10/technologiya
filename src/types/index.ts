@@ -1,32 +1,66 @@
-export interface Article {
-  id: string;
+// Appwrite document base interface
+export interface AppwriteDocument {
+  $id: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  $collectionId: string;
+  $databaseId: string;
+}
+
+export interface Article extends AppwriteDocument {
   title: string;
   slug: string;
   excerpt: string;
   content: string;
-  coverImage: string;
-  category: Category;
+  coverImage?: string;
+  categoryId: string;
+  authorId: string;
   tags: string[];
-  author: Author;
-  publishedAt: string;
-  updatedAt?: string;
-  featured?: boolean;
-  views?: number;
-  status?: 'draft' | 'published';
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: string;
+  views: number;
+  featured: boolean;
 }
 
-export interface Author {
-  id: string;
+export interface Author extends AppwriteDocument {
+  userId: string;
   name: string;
-  avatar?: string;
+  email: string;
   bio?: string;
+  avatar?: string;
+  role: 'admin' | 'author';
+  status: 'active' | 'inactive';
+  articleCount?: number;
 }
 
-export interface Category {
-  id: string;
+export interface Category extends AppwriteDocument {
   name: string;
   slug: string;
   description?: string;
+  color?: string;
+  icon?: string;
+  articleCount?: number;
+}
+
+export interface Comment extends AppwriteDocument {
+  articleId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  parentId?: string;
+  upvotes: number;
+  downvotes: number;
+  status: 'approved' | 'pending' | 'rejected';
+}
+
+export interface User extends AppwriteDocument {
+  name: string;
+  email: string;
+  avatar?: string;
+  role: 'user' | 'author' | 'admin';
+  bio?: string;
 }
 
 export const CATEGORIES: Category[] = [

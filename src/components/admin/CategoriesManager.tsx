@@ -1,59 +1,52 @@
-import { useState } from 'react';
-import { FiPlus, FiEdit, FiTrash2, FiFolder, FiX, FiSave } from 'react-icons/fi';
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  articleCount: number;
-  color: string;
-}
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { FiPlus, FiEdit, FiTrash2, FiFolder, FiX, FiSave, FiLoader } from 'react-icons/fi';
+import { categoryService } from '../../lib/appwriteServices';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/toast';
+import type { Category } from '../../types';
 
 export default function CategoriesManager() {
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: '1',
-      name: 'Wayoyi',
-      slug: 'wayoyi',
-      description: 'Labarai game da sabbin wayoyi da na\'urorin hannu',
-      articleCount: 12,
-      color: '#3B82F6',
-    },
-    {
-      id: '2',
-      name: 'AI & Machine Learning',
-      slug: 'ai-machine-learning',
-      description: 'Cigaban hankali mai wayo da koyon na\'ura',
-      articleCount: 8,
-      color: '#8B5CF6',
-    },
-    {
-      id: '3',
-      name: 'Hanyoyin Sadarwa',
-      slug: 'hanyoyin-sadarwa',
-      description: 'Labaran 5G, Internet, da hanyoyin sadarwa',
-      articleCount: 10,
-      color: '#10B981',
-    },
-    {
-      id: '4',
-      name: 'Manhajoji',
-      slug: 'manhajoji',
-      description: 'Software, apps, da kayan aiki',
-      articleCount: 15,
-      color: '#F59E0B',
-    },
-  ]);
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     description: '',
     color: '#3B82F6',
+    icon: 'folder',
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    try {
+      const result = await categoryService.getCategories();
+      
+      if (result.success && result.data) {
+        const categoriesData = result.data.documents as unknown as Category[];
+        setCategories(categoriesData);
+      } else {
+        console.error('Failed to fetch categories:', result.error);
+        setCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleOpenModal = (category?: Category) => {
     if (category) {
@@ -61,8 +54,9 @@ export default function CategoriesManager() {
       setFormData({
         name: category.name,
         slug: category.slug,
-        description: category.description,
-        color: category.color,
+        description: category.description || '',
+        color: category.color || '#3B82F6',
+        icon: category.icon || 'folder',
       });
     } else {
       setEditingCategory(null);
@@ -71,6 +65,7 @@ export default function CategoriesManager() {
         slug: '',
         description: '',
         color: '#3B82F6',
+        icon: 'folder',
       });
     }
     setIsModalOpen(true);
@@ -98,44 +93,87 @@ export default function CategoriesManager() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.slug) {
-      alert('Da fatan za a cika dukkan filayen masu mahimmanci');
+      showErrorToast('Da fatan za a cika dukkan filayen masu mahimmanci');
       return;
     }
 
-    if (editingCategory) {
-      // Update existing category
-      setCategories(
-        categories.map((cat) =>
-          cat.id === editingCategory.id
-            ? { ...cat, ...formData }
-            : cat
-        )
-      );
-    } else {
-      // Add new category
-      const newCategory: Category = {
-        id: Date.now().toString(),
-        ...formData,
-        articleCount: 0,
-      };
-      setCategories([...categories, newCategory]);
+    setIsSaving(true);
+    try {
+      if (editingCategory) {
+        // Update existing category
+        const result = await categoryService.updateCategory(editingCategory.$id, formData);
+        
+        if (result.success) {
+          await fetchCategories();
+          handleCloseModal();
+          showSuccessToast('An sabunta kalmar cikin nasara!');
+        } else {
+          showErrorToast('An samu kuskure wajen sabunta kalmar: ' + result.error);
+        }
+      } else {
+        // Add new category
+        const result = await categoryService.createCategory({
+          ...formData,
+          articleCount: 0,
+        });
+        
+        if (result.success) {
+          await fetchCategories();
+          handleCloseModal();
+          showSuccessToast('An ƙara sabuwar kalma cikin nasara!');
+        } else {
+          showErrorToast('An samu kuskure wajen ƙara kalmar: ' + result.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving category:', error);
+      showErrorToast('An samu kuskure wajen adana kalmar');
+    } finally {
+      setIsSaving(false);
     }
-
-    handleCloseModal();
   };
 
   const handleDelete = (id: string) => {
-    const category = categories.find((cat) => cat.id === id);
-    if (category && category.articleCount > 0) {
-      alert(`Ba za a iya share wannan kalma ba saboda yana da labarai ${category.articleCount}`);
+    const category = categories.find((cat) => cat.$id === id);
+    if (category && category.articleCount && category.articleCount > 0) {
+      showWarningToast(`Ba za a iya share wannan kalma ba saboda yana da labarai ${category.articleCount}`);
       return;
     }
 
-    if (confirm('Shin kana tabbatar da share wannan kalma?')) {
-      setCategories(categories.filter((cat) => cat.id !== id));
+    if (category) {
+      setCategoryToDelete(category);
+      setIsDeleteModalOpen(true);
     }
+  };
+
+  const confirmDelete = async () => {
+    if (!categoryToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await categoryService.deleteCategory(categoryToDelete.$id);
+      
+      if (result.success) {
+        await fetchCategories();
+        showSuccessToast('An share kalmar cikin nasara!');
+        setIsDeleteModalOpen(false);
+        setCategoryToDelete(null);
+      } else {
+        showErrorToast('An samu kuskure wajen share kalmar: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      showErrorToast('An samu kuskure wajen share kalmar');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setCategoryToDelete(null);
   };
 
   return (
@@ -159,69 +197,89 @@ export default function CategoriesManager() {
         </button>
       </div>
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <FiLoader className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Categories Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => (
               <div
-                className="w-12 h-12 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: `${category.color}20` }}
+                key={category.$id}
+                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
               >
-                <FiFolder className="w-6 h-6" style={{ color: category.color }} />
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleOpenModal(category)}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                  title="Gyara"
-                >
-                  <FiEdit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(category.id)}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                  title="Share"
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                <div className="flex items-start justify-between mb-4">
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${category.color || '#3B82F6'}20` }}
+                  >
+                    <FiFolder className="w-6 h-6" style={{ color: category.color || '#3B82F6' }} />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleOpenModal(category)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                      title="Gyara"
+                    >
+                      <FiEdit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category.$id)}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      title="Share"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {category.name}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {category.description}
-            </p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  {category.name}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  {category.description || 'Babu bayani'}
+                </p>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400 font-mono">
-                /{category.slug}
-              </span>
-              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-semibold">
-                {category.articleCount} labari
-              </span>
-            </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400 font-mono">
+                    /{category.slug}
+                  </span>
+                  <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-semibold">
+                    {category.articleCount || 0} labari
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+          {/* Empty State */}
+          {categories.length === 0 && (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <FiFolder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">
+                Babu kalmomi a halin yanzu. Danna "Ƙara Sabuwar Kalma" don farawa.
+              </p>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75"
-              onClick={handleCloseModal}
-            />
-
+      {isMounted && isModalOpen && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] overflow-y-auto bg-gray-900 bg-opacity-75"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, margin: 0 }}
+          onClick={handleCloseModal}
+        >
+          <div className="flex items-center justify-center min-h-screen px-4 py-8">
             {/* Modal Panel */}
-            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div 
+              className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -304,21 +362,123 @@ export default function CategoriesManager() {
               <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-end space-x-3">
                 <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Soke
                 </button>
                 <button
                   onClick={handleSave}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors space-x-2"
+                  disabled={isSaving}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <FiSave className="w-4 h-4" />
-                  <span>{editingCategory ? 'Sabunta' : 'Ƙara'}</span>
+                  {isSaving ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                      <span>Ana aiki...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiSave className="w-4 h-4" />
+                      <span>{editingCategory ? 'Sabunta' : 'Ƙara'}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isMounted && isDeleteModalOpen && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] overflow-y-auto bg-gray-900 bg-opacity-75"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, margin: 0 }}
+          onClick={cancelDelete}
+        >
+          <div className="flex items-center justify-center min-h-screen px-4 py-8">
+            <div 
+              className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Tabbatar da Share
+                  </h3>
+                  <button
+                    onClick={cancelDelete}
+                    disabled={isDeleting}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-4">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                    <FiTrash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 dark:text-white font-medium mb-2">
+                      Shin kana tabbatar da share wannan kalma?
+                    </p>
+                    {categoryToDelete && (
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-3">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {categoryToDelete.name}
+                        </p>
+                        {categoryToDelete.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {categoryToDelete.description}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Ba za a iya mayar da wannan aikin ba. Wannan zai share kalmar daga tsarin gudanarwa.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-end space-x-3">
+                <button
+                  onClick={cancelDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Soke
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                      <span>Ana sharewa...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiTrash2 className="w-4 h-4" />
+                      <span>Tabbatar da Share</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

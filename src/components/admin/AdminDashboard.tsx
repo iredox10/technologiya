@@ -1,4 +1,7 @@
-import { FiFileText, FiUsers, FiEye, FiTrendingUp, FiEdit, FiClock } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiFileText, FiUsers, FiEye, FiTrendingUp, FiEdit, FiClock, FiLoader } from 'react-icons/fi';
+import { articleService, categoryService, authorService } from '../../lib/appwriteServices';
+import type { Article, Category, Author } from '../../types';
 
 interface StatCard {
   title: string;
@@ -11,73 +14,150 @@ interface StatCard {
 interface RecentArticle {
   id: string;
   title: string;
-  status: 'published' | 'draft';
+  status: 'published' | 'draft' | 'archived';
   views: number;
   date: string;
 }
 
 export default function AdminDashboard() {
-  const stats: StatCard[] = [
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<StatCard[]>([
     {
       title: 'Jimlar Labarai',
-      value: '48',
-      change: '+12%',
+      value: '0',
+      change: '-',
       trend: 'up',
       icon: FiFileText,
     },
     {
-      title: 'Jama\'ar Masu Karatu',
-      value: '12,543',
-      change: '+23%',
+      title: 'Jimlar Kalmomi',
+      value: '0',
+      change: '-',
       trend: 'up',
       icon: FiUsers,
     },
     {
-      title: 'Kallonin Yau',
-      value: '2,847',
-      change: '+8%',
+      title: 'Marubuta',
+      value: '0',
+      change: '-',
       trend: 'up',
       icon: FiEye,
     },
     {
-      title: 'Labarai Masu Ɗaci',
-      value: '6',
+      title: 'Bugaggu',
+      value: '0',
       change: '-',
       trend: 'up',
       icon: FiTrendingUp,
     },
-  ];
+  ]);
+  const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
 
-  const recentArticles: RecentArticle[] = [
-    {
-      id: '1',
-      title: 'Sabbin Hanyoyin AI a Cikin Fasaha',
-      status: 'published',
-      views: 1234,
-      date: '2 hours ago',
-    },
-    {
-      id: '2',
-      title: 'Canje-canjen 5G a Najeriya',
-      status: 'draft',
-      views: 0,
-      date: '5 hours ago',
-    },
-    {
-      id: '3',
-      title: 'Sabbin Wayoyin Samsung Galaxy',
-      status: 'published',
-      views: 892,
-      date: '1 day ago',
-    },
-    {
-      id: '4',
-      title: 'Cigaban Quantum Computing',
-      status: 'draft',
-      views: 0,
-      date: '2 days ago',
-    },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch all data in parallel
+      const [articlesResult, categoriesResult, authorsResult] = await Promise.all([
+        articleService.getArticles(1, 100),
+        categoryService.getCategories(),
+        authorService.getAuthors(),
+      ]);
+
+      // Extract data with proper type assertions
+      const articles = (articlesResult.success && articlesResult.data) ? articlesResult.data.documents as unknown as Article[] : [];
+      const categories = (categoriesResult.success && categoriesResult.data) ? categoriesResult.data.documents as unknown as Category[] : [];
+      const authors = (authorsResult.success && authorsResult.data) ? authorsResult.data.documents as unknown as Author[] : [];
+
+      // Calculate stats
+      const totalArticles = articles.length;
+      const publishedArticles = articles.filter((a) => a.status === 'published').length;
+      const totalViews = articles.reduce((sum, a) => sum + (a.views || 0), 0);
+      const featuredArticles = articles.filter((a) => a.featured).length;
+
+      // Update stats
+      setStats([
+        {
+          title: 'Jimlar Labarai',
+          value: totalArticles.toString(),
+          change: publishedArticles > 0 ? `${publishedArticles} bugaggu` : '-',
+          trend: 'up',
+          icon: FiFileText,
+        },
+        {
+          title: 'Jimlar Kalmomi',
+          value: categories.length.toString(),
+          change: '-',
+          trend: 'up',
+          icon: FiUsers,
+        },
+        {
+          title: 'Marubuta',
+          value: authors.length.toString(),
+          change: '-',
+          trend: 'up',
+          icon: FiEye,
+        },
+        {
+          title: 'Kallon Labarai',
+          value: totalViews.toLocaleString(),
+          change: `${featuredArticles} masu ɗaci`,
+          trend: 'up',
+          icon: FiTrendingUp,
+        },
+      ]);
+
+      // Get recent articles (last 5)
+      const recent = articles
+        .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
+        .slice(0, 5)
+        .map((article) => {
+          const createdDate = new Date(article.$createdAt);
+          const now = new Date();
+          const diffMs = now.getTime() - createdDate.getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          
+          let dateStr = '';
+          if (diffHours < 1) {
+            dateStr = 'Yanzu haka';
+          } else if (diffHours < 24) {
+            dateStr = `${diffHours} ${diffHours === 1 ? 'awa' : 'awanni'} da suka wuce`;
+          } else {
+            dateStr = `${diffDays} ${diffDays === 1 ? 'rana' : 'ranaku'} da suka wuce`;
+          }
+
+          return {
+            id: article.$id,
+            title: article.title,
+            status: article.status,
+            views: article.views || 0,
+            date: dateStr,
+          };
+        });
+
+      setRecentArticles(recent);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <FiLoader className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Ana loda bayanan...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

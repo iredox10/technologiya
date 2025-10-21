@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FiSearch, FiEdit2, FiTrash2, FiEye, FiPlus } from 'react-icons/fi';
+import { showSuccessToast } from '../../utils/toast';
 
 interface Article {
   id: string;
@@ -76,7 +77,7 @@ export default function AuthorArticlesList() {
     if (confirm('Kana tabbatar da share wannan labarin?')) {
       // TODO: Implement Appwrite delete
       console.log('Deleting article:', id);
-      alert('An share labarin!');
+      showSuccessToast('An share labarin!');
     }
   };
 

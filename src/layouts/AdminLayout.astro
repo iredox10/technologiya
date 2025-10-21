@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import AdminSidebar from '../components/admin/AdminSidebar';
+import { Toaster } from 'react-hot-toast';
 
 interface Props {
   title: string;
@@ -13,6 +14,11 @@ const { title } = Astro.props;
 ---
 
 <BaseLayout title={`${title} - Technologiya Admin`}>
+  <Toaster 
+    position="top-right" 
+    reverseOrder={false}
+    client:load
+  />
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Admin Sidebar -->
     <AdminSidebar client:load />

@@ -1,31 +1,14 @@
 ---
 import AdminLayout from '../../../../layouts/AdminLayout.astro';
 import ArticleEditor from '../../../../components/admin/ArticleEditor';
-import { getArticleBySlug } from '../../../../data/mockData';
 
-export function getStaticPaths() {
-  // In production, this would fetch from Appwrite
-  const mockArticles = [
-    { id: '1', slug: 'karfin-fasahar-ai' },
-    { id: '2', slug: 'wayoyin-dijital' },
-    { id: '3', slug: 'garin-kano' },
-    { id: '4', slug: 'manhajoji' },
-  ];
+const { id } = Astro.params;
 
-  return mockArticles.map((article) => ({
-    params: { id: article.id },
-    props: { articleSlug: article.slug },
-  }));
-}
-
-const { articleSlug } = Astro.props;
-const article = getArticleBySlug(articleSlug);
-
-if (!article) {
+if (!id) {
   return Astro.redirect('/admin/articles');
 }
 ---
 
-<AdminLayout title={`Gyara: ${article.title} - Admin`}>
-  <ArticleEditor article={article} isEditing={true} client:load />
+<AdminLayout title="Gyara Labarin - Admin">
+  <ArticleEditor articleId={id} isEditing={true} client:load />
 </AdminLayout>
