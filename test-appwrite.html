@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appwrite Connection Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0066ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0052cc;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Appwrite Connection Test</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong><br>
+            1. Fill in your Appwrite project details from your .env file<br>
+            2. Enter the admin credentials you created<br>
+            3. Click "Test Login"
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label>Appwrite Endpoint</label>
+                <input type="text" id="endpoint" value="https://cloud.appwrite.io/v1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Project ID (from your .env file)</label>
+                <input type="text" id="projectId" placeholder="e.g., 68f4bbc30029d695034f" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="admin@technologiya.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Test Login</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        import { Client, Account } from 'https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm';
+
+        const form = document.getElementById('testForm');
+        const result = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const endpoint = document.getElementById('endpoint').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Testing...';
+            result.style.display = 'none';
+
+            try {
+                console.log('🔐 Testing with:', {
+                    endpoint,
+                    projectId,
+                    email,
+                    passwordLength: password.length
+                });
+
+                const client = new Client()
+                    .setEndpoint(endpoint)
+                    .setProject(projectId);
+
+                const account = new Account(client);
+
+                // Test login
+                const session = await account.createEmailPasswordSession(email, password);
+                
+                console.log('✅ Login successful!', session);
+
+                // Get user details
+                const user = await account.get();
+                
+                console.log('✅ User details:', user);
+
+                result.className = 'success';
+                result.innerHTML = `
+                    <strong>✅ SUCCESS!</strong><br><br>
+                    <strong>Session ID:</strong> ${session.$id}<br>
+                    <strong>User ID:</strong> ${user.$id}<br>
+                    <strong>Email:</strong> ${user.email}<br>
+                    <strong>Name:</strong> ${user.name}<br><br>
+                    <strong>Full User Object:</strong>
+                    <pre>${JSON.stringify(user, null, 2)}</pre>
+                    <strong>Next Step:</strong> Your Appwrite connection works! The issue might be in your .env file or code.
+                `;
+                result.style.display = 'block';
+
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                
+                result.className = 'error';
+                result.innerHTML = `
+                    <strong>❌ ERROR</strong><br><br>
+                    <strong>Message:</strong> ${error.message}<br>
+                    <strong>Code:</strong> ${error.code || 'N/A'}<br>
+                    <strong>Type:</strong> ${error.type || 'N/A'}<br><br>
+                    <strong>Common Issues:</strong><br>
+                    ${error.code === 401 ? '• Wrong email or password<br>• User might not exist in Appwrite Auth' : ''}
+                    ${error.code === 404 ? '• Wrong Project ID<br>• Check your project ID in Appwrite Console' : ''}
+                    ${!error.code ? '• Network issue<br>• Check internet connection' : ''}
+                    <br><br>
+                    <strong>Full Error:</strong>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                `;
+                result.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Test Login';
+            }
+        });
+    </script>
+</body>
+</html>

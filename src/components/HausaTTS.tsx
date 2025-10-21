@@ -18,6 +18,16 @@ export default function HausaTTS({ text, articleId, apiKey }: HausaTTSProps) {
   const [audioGenerated, setAudioGenerated] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Debug: Log API key status
+  useEffect(() => {
+    console.log('🔑 HausaTTS API Key Check:', {
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey?.length,
+      startsWithHf: apiKey?.startsWith('hf_'),
+      firstChars: apiKey?.substring(0, 5)
+    });
+  }, [apiKey]);
+
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   const audioBufferRef = useRef<ArrayBuffer | null>(null);

@@ -9,10 +9,29 @@ export class AuthService {
   // Login with email and password
   async login(email: string, password: string) {
     try {
+      // Debug logging
+      console.log('🔐 Login attempt:', {
+        email: email,
+        emailLength: email.length,
+        passwordLength: password.length,
+        hasEmail: !!email,
+        hasPassword: !!password,
+        endpoint: APPWRITE_CONFIG.endpoint,
+        projectId: APPWRITE_CONFIG.projectId
+      });
+
       const session = await account.createEmailPasswordSession(email, password);
+      
+      console.log('✅ Login successful! Session:', session);
       return { success: true, data: session };
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        type: error.type,
+        response: error.response
+      });
       return { success: false, error: error.message };
     }
   }

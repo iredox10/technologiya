@@ -169,7 +169,7 @@ const shareTitle = encodeURIComponent(article.title);
     <HausaTTS 
       text={article.content} 
       articleId={article.id}
-      apiKey={import.meta.env.HUGGINGFACEAPIKEY}
+      apiKey={import.meta.env.PUBLIC_HUGGINGFACE_API_KEY}
       client:load 
     />
 
