@@ -1,4 +1,8 @@
+import { useState, useEffect } from 'react';
 import { FiFileText, FiEye, FiTrendingUp, FiClock, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { articleService, authService, authorService } from '../../lib/appwriteServices';
+import type { Article as AppwriteArticle } from '../../types';
+import { showErrorToast } from '../../utils/toast';
 
 interface StatCard {
   title: string;
@@ -16,44 +20,86 @@ interface Article {
 }
 
 export default function AuthorDashboard() {
-  // Mock current author data - will be replaced with Appwrite
-  const authorStats = {
-    totalArticles: 25,
-    totalViews: 45832,
-    draftArticles: 3,
-    publishedThisMonth: 5,
-  };
+  const [loading, setLoading] = useState(true);
+  const [currentAuthorId, setCurrentAuthorId] = useState<string | null>(null);
+  const [authorName, setAuthorName] = useState('Marubucin');
+  const [authorStats, setAuthorStats] = useState({
+    totalArticles: 0,
+    totalViews: 0,
+    draftArticles: 0,
+    publishedThisMonth: 0,
+  });
+  const [recentArticles, setRecentArticles] = useState<AppwriteArticle[]>([]);
 
-  const recentArticles: Article[] = [
-    {
-      id: '1',
-      title: 'Yadda AI ke Canza Rayuwarmu',
-      status: 'published',
-      views: 2847,
-      publishedAt: '2025-10-15',
-    },
-    {
-      id: '2',
-      title: 'Wayoyin Dijital a Najeriya',
-      status: 'published',
-      views: 1923,
-      publishedAt: '2025-10-12',
-    },
-    {
-      id: '3',
-      title: 'Tsarin Sadarwa ta 5G',
-      status: 'draft',
-      views: 0,
-      publishedAt: '2025-10-10',
-    },
-    {
-      id: '4',
-      title: 'Kimiyyar Kwamfuta da Manhajoji',
-      status: 'published',
-      views: 3421,
-      publishedAt: '2025-10-08',
-    },
-  ];
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Get current user
+      const userResult = await authService.getCurrentUser();
+      if (!userResult.success || !userResult.data) {
+        showErrorToast('Please login first');
+        window.location.href = '/author/login';
+        return;
+      }
+
+      // Get author profile
+      const authorResult = await authorService.getAuthorByUserId(userResult.data.$id);
+      if (!authorResult.success || !authorResult.data) {
+        showErrorToast('Author profile not found');
+        return;
+      }
+
+      const author = authorResult.data;
+      setCurrentAuthorId(author.$id);
+      setAuthorName(author.name);
+
+      // Fetch all articles by this author
+      const articlesResult = await articleService.getArticlesByAuthor(author.$id, 1, 1000); // Get all articles
+      
+      if (articlesResult.success && articlesResult.data) {
+        const articles = articlesResult.data.documents as unknown as AppwriteArticle[];
+        
+        // Calculate stats
+        const totalArticles = articles.length;
+        const totalViews = articles.reduce((sum: number, article: any) => sum + (article.views || 0), 0);
+        const draftArticles = articles.filter((a: any) => a.status === 'draft').length;
+        
+        // Published this month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const publishedThisMonth = articles.filter((a: any) => {
+          if (a.status !== 'published' || !a.publishedAt) return false;
+          const publishedDate = new Date(a.publishedAt);
+          return publishedDate >= firstDayOfMonth;
+        }).length;
+
+        setAuthorStats({
+          totalArticles,
+          totalViews,
+          draftArticles,
+          publishedThisMonth,
+        });
+
+        // Get recent articles (last 4)
+        const sorted = [...articles].sort((a, b) => {
+          const dateA = new Date(a.$createdAt || 0).getTime();
+          const dateB = new Date(b.$createdAt || 0).getTime();
+          return dateB - dateA;
+        });
+        setRecentArticles(sorted.slice(0, 4));
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      showErrorToast('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats: StatCard[] = [
     {
@@ -92,11 +138,25 @@ export default function AuthorDashboard() {
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <svg className="animate-spin h-12 w-12 text-green-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Message */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">Sannu, Musa Ibrahim!</h2>
+        <h2 className="text-2xl font-bold mb-2">Sannu, {authorName}!</h2>
         <p className="text-green-100">
           Barka da zuwa zuwa shafinka na rubutu. Ka ci gaba da rubutu labaran ban sha'awa!
         </p>
@@ -194,44 +254,63 @@ export default function AuthorDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {recentArticles.map((article) => (
-                <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {article.title}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        article.status === 'published'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                      }`}
-                    >
-                      {article.status === 'published' ? 'An buga' : 'Daftari'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white tabular-nums">
-                      {article.views > 0 ? article.views.toLocaleString() : '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">
-                      {new Date(article.publishedAt).toLocaleDateString('ha-NG')}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+              {recentArticles.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Ba ka da wani labari tukuna. Fara rubutu yanzu!
+                    </p>
                     <a
-                      href={`/author/articles/edit/${article.id}`}
-                      className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                      href="/author/articles/new"
+                      className="inline-block mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
                     >
-                      Gyara
+                      Rubuta Sabon Labari
                     </a>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                recentArticles.map((article) => (
+                  <tr key={article.$id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {article.title}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          article.status === 'published'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                        }`}
+                      >
+                        {article.status === 'published' ? 'An buga' : 'Daftari'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900 dark:text-white tabular-nums">
+                        {article.views > 0 ? article.views.toLocaleString() : '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">
+                        {article.publishedAt 
+                          ? new Date(article.publishedAt).toLocaleDateString('ha-NG')
+                          : new Date(article.$createdAt || '').toLocaleDateString('ha-NG')
+                        }
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <a
+                        href={`/author/articles/edit/${article.$id}`}
+                        className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                      >
+                        Gyara
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

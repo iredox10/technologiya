@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiEdit } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiEdit, FiAlertCircle } from 'react-icons/fi';
 
 export default function AuthorLogin() {
   const [email, setEmail] = useState('');
@@ -7,6 +7,15 @@ export default function AuthorLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [timeoutMessage, setTimeoutMessage] = useState(false);
+
+  useEffect(() => {
+    // Check if redirected due to timeout
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('timeout') === 'true') {
+      setTimeoutMessage(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +55,23 @@ export default function AuthorLogin() {
 
         {/* Login Form */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+          {/* Timeout Warning */}
+          {timeoutMessage && (
+            <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-start">
+                <FiAlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-1">
+                    An fitar da kai saboda rashin aiki
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                    An fitar da kai saboda ba ka yi wani aiki na tsawon mintuna 10. Don aminci, ka sake shiga don ci gaba.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>

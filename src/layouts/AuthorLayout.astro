@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import AuthorSidebar from '../components/author/AuthorSidebar';
+import ActivityTracker from '../components/author/ActivityTracker';
 import { Toaster } from 'react-hot-toast';
 
 interface Props {
@@ -19,6 +20,10 @@ const { title } = Astro.props;
     reverseOrder={false}
     client:load
   />
+  
+  <!-- Activity Tracker for Auto-Logout -->
+  <ActivityTracker client:load />
+  
   <div class="flex h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar -->
     <AuthorSidebar client:load />
