@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { settingsService } from '../../lib/appwriteServices';
+import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toast';
 import { FiGlobe, FiUser, FiSearch, FiMail, FiShield, FiDatabase } from 'react-icons/fi';
 
 interface SettingsSection {
@@ -34,6 +36,8 @@ interface UserSettings {
 export default function SettingsPanel() {
   const [activeSection, setActiveSection] = useState('site');
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const sections: SettingsSection[] = [
     { id: 'site', name: 'Saitunan Gaba ɗaya', icon: FiGlobe },
@@ -71,11 +75,109 @@ export default function SettingsPanel() {
     moderateComments: true,
   });
 
-  const handleSave = () => {
-    // TODO: Save to Appwrite database
-    console.log('Saving settings...', { siteSettings, seoSettings, userSettings });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  // Load settings from Appwrite on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const result = await settingsService.getAllSettings();
+      
+      if (result.success && result.data) {
+        // Convert array of settings to object structure
+        const settingsMap: { [key: string]: string } = {};
+        result.data.forEach((setting: any) => {
+          settingsMap[setting.settingKey] = setting.settingValue;
+        });
+
+        // Parse site settings
+        if (settingsMap['siteName']) {
+          setSiteSettings({
+            siteName: settingsMap['siteName'] || 'Technologiya',
+            siteDescription: settingsMap['siteDescription'] || '',
+            siteUrl: settingsMap['siteUrl'] || '',
+            contactEmail: settingsMap['contactEmail'] || '',
+            language: settingsMap['language'] || 'ha',
+            timezone: settingsMap['timezone'] || 'Africa/Lagos',
+          });
+        }
+
+        // Parse SEO settings
+        if (settingsMap['metaTitle']) {
+          setSeoSettings({
+            metaTitle: settingsMap['metaTitle'] || '',
+            metaDescription: settingsMap['metaDescription'] || '',
+            metaKeywords: settingsMap['metaKeywords'] || '',
+            ogImage: settingsMap['ogImage'] || '',
+            twitterHandle: settingsMap['twitterHandle'] || '',
+          });
+        }
+
+        // Parse user settings
+        if (settingsMap['enableRegistration']) {
+          setUserSettings({
+            enableRegistration: settingsMap['enableRegistration'] === 'true',
+            requireEmailVerification: settingsMap['requireEmailVerification'] === 'true',
+            allowComments: settingsMap['allowComments'] === 'true',
+            moderateComments: settingsMap['moderateComments'] === 'true',
+          });
+        }
+
+        showInfoToast('Settings loaded');
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      showInfoToast('Using default settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      // Prepare all settings for batch update
+      const allSettings = [
+        // Site settings
+        { settingKey: 'siteName', settingValue: siteSettings.siteName, category: 'site' },
+        { settingKey: 'siteDescription', settingValue: siteSettings.siteDescription, category: 'site' },
+        { settingKey: 'siteUrl', settingValue: siteSettings.siteUrl, category: 'site' },
+        { settingKey: 'contactEmail', settingValue: siteSettings.contactEmail, category: 'site' },
+        { settingKey: 'language', settingValue: siteSettings.language, category: 'site' },
+        { settingKey: 'timezone', settingValue: siteSettings.timezone, category: 'site' },
+        
+        // SEO settings
+        { settingKey: 'metaTitle', settingValue: seoSettings.metaTitle, category: 'seo' },
+        { settingKey: 'metaDescription', settingValue: seoSettings.metaDescription, category: 'seo' },
+        { settingKey: 'metaKeywords', settingValue: seoSettings.metaKeywords, category: 'seo' },
+        { settingKey: 'ogImage', settingValue: seoSettings.ogImage, category: 'seo' },
+        { settingKey: 'twitterHandle', settingValue: seoSettings.twitterHandle, category: 'seo' },
+        
+        // User settings
+        { settingKey: 'enableRegistration', settingValue: String(userSettings.enableRegistration), category: 'users' },
+        { settingKey: 'requireEmailVerification', settingValue: String(userSettings.requireEmailVerification), category: 'users' },
+        { settingKey: 'allowComments', settingValue: String(userSettings.allowComments), category: 'users' },
+        { settingKey: 'moderateComments', settingValue: String(userSettings.moderateComments), category: 'users' },
+      ];
+
+      const result = await settingsService.batchUpdateSettings(allSettings);
+      
+      if (result.success) {
+        showSuccessToast('Settings saved successfully!');
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        showErrorToast('Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showErrorToast('Error saving settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -108,6 +210,18 @@ export default function SettingsPanel() {
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-gray-600 dark:text-gray-400">Loading settings...</p>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Site Settings */}
         {activeSection === 'site' && (
           <div className="max-w-2xl">
@@ -420,17 +534,30 @@ export default function SettingsPanel() {
           <div className="flex items-center space-x-4">
             <button
               onClick={handleSave}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              disabled={saving}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center space-x-2"
             >
-              Ajiye Canje-canje
+              {saving ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Ana Ajiyewa...</span>
+                </>
+              ) : (
+                <span>Ajiye Canje-canje</span>
+              )}
             </button>
-            {saved && (
+            {saved && !saving && (
               <span className="text-green-600 dark:text-green-400 text-sm font-medium">
                 ✓ An ajiye saitunan
               </span>
             )}
           </div>
         </div>
+          </>
+        )}
       </main>
     </div>
   );

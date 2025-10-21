@@ -63,6 +63,12 @@ export interface User extends AppwriteDocument {
   bio?: string;
 }
 
+export interface Settings extends AppwriteDocument {
+  settingKey: string;
+  settingValue: string;
+  category: 'site' | 'seo' | 'users' | 'email' | 'security';
+}
+
 export const CATEGORIES: Category[] = [
   {
     id: '1',

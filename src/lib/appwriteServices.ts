@@ -545,9 +545,124 @@ export class StorageService {
   }
 }
 
+// ============================================
+// SETTINGS SERVICE
+// ============================================
+
+export class SettingsService {
+  // Get all settings
+  async getAllSettings() {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.settings
+      );
+      return { success: true, data: response.documents };
+    } catch (error: any) {
+      console.error('Get settings error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get settings by category
+  async getSettingsByCategory(category: string) {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.settings,
+        [Query.equal('category', category)]
+      );
+      return { success: true, data: response.documents };
+    } catch (error: any) {
+      console.error('Get settings by category error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get setting by key
+  async getSettingByKey(settingKey: string) {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.settings,
+        [Query.equal('settingKey', settingKey)]
+      );
+      if (response.documents.length > 0) {
+        return { success: true, data: response.documents[0] };
+      }
+      return { success: false, error: 'Setting not found' };
+    } catch (error: any) {
+      console.error('Get setting by key error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Create or update setting
+  async upsertSetting(settingKey: string, settingValue: string, category: string) {
+    try {
+      // Check if setting exists
+      const existing = await this.getSettingByKey(settingKey);
+      
+      if (existing.success && existing.data) {
+        // Update existing
+        const updated = await databases.updateDocument(
+          APPWRITE_CONFIG.databaseId,
+          APPWRITE_CONFIG.collections.settings,
+          existing.data.$id,
+          { settingKey, settingValue, category }
+        );
+        return { success: true, data: updated };
+      } else {
+        // Create new
+        const created = await databases.createDocument(
+          APPWRITE_CONFIG.databaseId,
+          APPWRITE_CONFIG.collections.settings,
+          ID.unique(),
+          { settingKey, settingValue, category }
+        );
+        return { success: true, data: created };
+      }
+    } catch (error: any) {
+      console.error('Upsert setting error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Batch update settings
+  async batchUpdateSettings(settings: { settingKey: string; settingValue: string; category: string }[]) {
+    try {
+      const promises = settings.map(setting => 
+        this.upsertSetting(setting.settingKey, setting.settingValue, setting.category)
+      );
+      const results = await Promise.all(promises);
+      const success = results.every(r => r.success);
+      return { success, data: results };
+    } catch (error: any) {
+      console.error('Batch update settings error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Delete setting
+  async deleteSetting(settingId: string) {
+    try {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.settings,
+        settingId
+      );
+      return { success: true };
+    } catch (error: any) {
+      console.error('Delete setting error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+}
+
 // Export service instances
 export const authService = new AuthService();
 export const articleService = new ArticleService();
 export const categoryService = new CategoryService();
 export const authorService = new AuthorService();
 export const storageService = new StorageService();
+export const settingsService = new SettingsService();

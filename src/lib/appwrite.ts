@@ -13,6 +13,7 @@ export const APPWRITE_CONFIG = {
     authors: import.meta.env.PUBLIC_APPWRITE_COLLECTION_AUTHORS || '',
     comments: import.meta.env.PUBLIC_APPWRITE_COLLECTION_COMMENTS || '',
     users: import.meta.env.PUBLIC_APPWRITE_COLLECTION_USERS || '',
+    settings: import.meta.env.PUBLIC_APPWRITE_COLLECTION_SETTINGS || '',
   },
   
   // Storage Bucket IDs
