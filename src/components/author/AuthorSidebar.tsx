@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FiHome, 
   FiFileText, 
@@ -9,7 +9,7 @@ import {
   FiPlusCircle,
   FiLogOut
 } from 'react-icons/fi';
-import { authService } from '../../lib/appwriteServices';
+import { authService, authorService } from '../../lib/appwriteServices';
 
 interface NavItem {
   name: string;
@@ -20,14 +20,58 @@ interface NavItem {
 
 export default function AuthorSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Mock current author - will be replaced with Appwrite session data
-  const currentAuthor = {
+  const [isChecking, setIsChecking] = useState(true);
+  const [currentAuthor, setCurrentAuthor] = useState({
     name: 'Musa Ibrahim',
     email: 'musa@technologiya.com',
     avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=3B82F6&color=fff',
     articlesCount: 25,
-  };
+  });
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userResult = await authService.getCurrentUser();
+        
+        if (!userResult.success || !userResult.data) {
+          window.location.href = '/login';
+          return;
+        }
+
+        // Check if user is an author/admin
+        const authorResult = await authorService.getAuthorByUserId(userResult.data.$id);
+        
+        if (!authorResult.success || !authorResult.data) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const author = authorResult.data;
+        
+        // Check if active and has proper role
+        if (author.status !== 'active' || (author.role !== 'author' && author.role !== 'admin')) {
+          window.location.href = '/login';
+          return;
+        }
+
+        // Update author data
+        setCurrentAuthor({
+          name: author.name,
+          email: author.email,
+          avatar: author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name)}&background=3B82F6&color=fff`,
+          articlesCount: author.articleCount || 0,
+        });
+
+        setIsChecking(false);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        window.location.href = '/login';
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/author', icon: FiHome },
@@ -46,6 +90,18 @@ export default function AuthorSidebar() {
       window.location.href = '/login';
     }
   };
+
+  // Show loading while checking auth
+  if (isChecking) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
