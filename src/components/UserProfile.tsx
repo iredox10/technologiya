@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { FiUser, FiMail, FiEdit2, FiSave, FiMessageCircle, FiHeart, FiClock } from 'react-icons/fi';
+import { FiUser, FiMail, FiEdit2, FiSave, FiMessageCircle, FiHeart, FiClock, FiLoader } from 'react-icons/fi';
+import { authService } from '../lib/appwriteServices';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 interface User {
   name: string;
@@ -22,6 +24,7 @@ interface UserComment {
 export default function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
@@ -29,28 +32,52 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState<'profile' | 'comments'>('profile');
 
   useEffect(() => {
-    // Load user from localStorage
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setUser(userData);
-        setName(userData.name);
-        setBio(userData.bio || '');
-        setAvatar(userData.avatar || '');
-        
-        // Load mock comments
-        loadUserComments(userData.id);
-      } catch (e) {
-        console.error('Failed to parse user data:', e);
-        // Redirect to login if no valid user
-        window.location.href = '/user-login';
-      }
-    } else {
-      // Redirect to login if not logged in
-      window.location.href = '/user-login';
-    }
+    loadUserProfile();
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get current user from Appwrite
+      const result = await authService.getCurrentUser();
+      
+      if (!result.success || !result.data) {
+        // Redirect to login if not logged in
+        window.location.href = '/user-login';
+        return;
+      }
+
+      const appwriteUser = result.data;
+      
+      // Map Appwrite user to our User interface
+      const userData: User = {
+        id: appwriteUser.$id,
+        name: appwriteUser.name,
+        email: appwriteUser.email,
+        avatar: appwriteUser.prefs?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${appwriteUser.name}`,
+        bio: appwriteUser.prefs?.bio || '',
+        joinedDate: appwriteUser.$createdAt
+      };
+
+      setUser(userData);
+      setName(userData.name);
+      setBio(userData.bio || '');
+      setAvatar(userData.avatar || '');
+      
+      // Load user comments (TODO: implement when comment system is ready)
+      loadUserComments(userData.id);
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+      showErrorToast('An sami kuskure wajen loda bayanan mai amfani');
+      // Redirect to login on error
+      setTimeout(() => {
+        window.location.href = '/user-login';
+      }, 2000);
+    }
+  };
 
   const loadUserComments = (userId: string) => {
     // TODO: Load from Appwrite
@@ -75,22 +102,35 @@ export default function UserProfile() {
     setComments(mockComments);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
 
-    const updatedUser = {
-      ...user,
-      name,
-      bio,
-      avatar: avatar || user.avatar
-    };
+    try {
+      // Update user preferences in Appwrite
+      const result = await authService.updatePreferences({
+        avatar: avatar || user.avatar,
+        bio: bio
+      });
 
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    setIsEditing(false);
+      if (result.success) {
+        // Update local user state
+        const updatedUser = {
+          ...user,
+          name,
+          bio,
+          avatar: avatar || user.avatar
+        };
 
-    // TODO: Save to Appwrite database
-    console.log('Saving user profile:', updatedUser);
+        setUser(updatedUser);
+        setIsEditing(false);
+        showSuccessToast('An sabunta bayanan mai amfani cikin nasara');
+      } else {
+        showErrorToast('An sami kuskure wajen sabunta bayanan');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      showErrorToast('An sami kuskure wajen sabunta bayanan');
+    }
   };
 
   const generateAvatar = () => {
@@ -111,10 +151,13 @@ export default function UserProfile() {
     return `${Math.floor(diffDays / 30)} wata da suka gabata`;
   };
 
-  if (!user) {
+  if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <FiLoader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Ana loda bayanan mai amfani...</p>
+        </div>
       </div>
     );
   }

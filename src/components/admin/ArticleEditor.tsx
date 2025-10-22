@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiSave, FiEye, FiUpload, FiX } from 'react-icons/fi';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
-import { articleService, categoryService, authorService, storageService } from '../../lib/appwriteServices';
+import { articleService, categoryService, authorService, storageService, authService } from '../../lib/appwriteServices';
 import type { Article, Category, Author } from '../../types';
 import RichTextEditor from './RichTextEditor';
 
@@ -22,9 +22,10 @@ interface ArticleFormData {
 interface ArticleEditorProps {
   articleId?: string;
   isEditing?: boolean;
+  isAuthorMode?: boolean; // Flag to indicate if used by author
 }
 
-export default function ArticleEditor({ articleId, isEditing = false }: ArticleEditorProps) {
+export default function ArticleEditor({ articleId, isEditing = false, isAuthorMode = false }: ArticleEditorProps) {
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     slug: '',
@@ -41,6 +42,8 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
+  const [currentAuthorId, setCurrentAuthorId] = useState<string>('');
+  const [currentAuthorName, setCurrentAuthorName] = useState<string>('');
   const [tagInput, setTagInput] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,7 +63,25 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
         }
 
         if (authorsResult.success && authorsResult.data) {
-          setAuthors(authorsResult.data.documents as unknown as Author[]);
+          const authorsData = authorsResult.data.documents as unknown as Author[];
+          setAuthors(authorsData);
+
+          // If in author mode, auto-select current author
+          if (isAuthorMode && !isEditing) {
+            try {
+              const userResult = await authService.getCurrentUser();
+              if (userResult.success && userResult.data) {
+                const author = authorsData.find(a => a.userId === userResult.data.$id);
+                if (author) {
+                  setCurrentAuthorId(author.$id);
+                  setCurrentAuthorName(author.name);
+                  setFormData(prev => ({ ...prev, authorId: author.$id }));
+                }
+              }
+            } catch (error) {
+              console.error('Error loading current author:', error);
+            }
+          }
         }
 
         setIsLoading(false);
@@ -72,7 +93,7 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
     };
 
     fetchData();
-  }, []);
+  }, [isAuthorMode, isEditing]);
 
   // Load article data if editing
   useEffect(() => {
@@ -96,6 +117,14 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
               status: article.status,
               featured: article.featured || false,
             });
+
+            // If in author mode, set author name for display
+            if (isAuthorMode && authors.length > 0) {
+              const author = authors.find(a => a.$id === article.authorId);
+              if (author) {
+                setCurrentAuthorName(author.name);
+              }
+            }
           }
         } catch (error) {
           console.error('Error fetching article:', error);
@@ -105,7 +134,7 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
 
       fetchArticle();
     }
-  }, [articleId, isEditing]);
+  }, [articleId, isEditing, isAuthorMode, authors]);
 
   const generateSlug = (title: string) => {
     return title
@@ -367,18 +396,24 @@ export default function ArticleEditor({ articleId, isEditing = false }: ArticleE
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Marubucin *
               </label>
-              <select
-                value={formData.authorId}
-                onChange={(e) => setFormData({ ...formData, authorId: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Zaɓi marubucin...</option>
-                {authors.map((author) => (
-                  <option key={author.$id} value={author.$id}>
-                    {author.name}
-                  </option>
-                ))}
-              </select>
+              {isAuthorMode ? (
+                <div className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-400">
+                  {currentAuthorName || 'Ana ɗaukar...'}
+                </div>
+              ) : (
+                <select
+                  value={formData.authorId}
+                  onChange={(e) => setFormData({ ...formData, authorId: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Zaɓi marubucin...</option>
+                  {authors.map((author) => (
+                    <option key={author.$id} value={author.$id}>
+                      {author.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

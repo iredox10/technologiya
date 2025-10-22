@@ -76,6 +76,49 @@ export class AuthService {
     return result.success;
   }
 
+  // OAuth Login
+  async loginWithOAuth(provider: 'google' | 'facebook' | 'twitter') {
+    try {
+      // Get the current URL for redirect
+      const successUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : 'http://localhost:4321/';
+      const failureUrl = typeof window !== 'undefined' ? `${window.location.origin}/user-login?error=oauth` : 'http://localhost:4321/user-login?error=oauth';
+
+      // Create OAuth2 session
+      await account.createOAuth2Session(
+        provider as any,
+        successUrl,
+        failureUrl
+      );
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('OAuth login error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Update user preferences
+  async updatePreferences(prefs: Record<string, any>) {
+    try {
+      const result = await account.updatePrefs(prefs);
+      return { success: true, data: result };
+    } catch (error: any) {
+      console.error('Update preferences error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Update user name
+  async updateName(name: string) {
+    try {
+      const result = await account.updateName(name);
+      return { success: true, data: result };
+    } catch (error: any) {
+      console.error('Update name error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Get user role from database
   async getUserRole(userId: string): Promise<'admin' | 'author' | 'user' | null> {
     try {

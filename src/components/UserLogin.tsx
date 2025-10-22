@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
 import { FaGoogle, FaFacebook, FaXTwitter } from 'react-icons/fa6';
+import { authService } from '../lib/appwriteServices';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 export default function UserLogin() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -16,48 +18,77 @@ export default function UserLogin() {
     setIsLoading(true);
     setError('');
 
-    // TODO: Implement Appwrite authentication
-    console.log(isSignUp ? 'Sign up attempt:' : 'Login attempt:', { email, password, name });
-
-    // Mock login/signup for now
-    setTimeout(() => {
+    try {
       if (isSignUp) {
-        // Mock sign up
-        console.log('User registered:', { name, email });
-        // Store user session
-        localStorage.setItem('user', JSON.stringify({ name, email, id: '12345' }));
-        window.location.href = '/';
+        // Sign up new user
+        if (!name.trim()) {
+          setError('Da fatan za a shigar da suna');
+          setIsLoading(false);
+          return;
+        }
+
+        if (password.length < 8) {
+          setError('Kalmar sirri ta kamata ta zama aƙalla haruffa 8');
+          setIsLoading(false);
+          return;
+        }
+
+        const result = await authService.register(email, password, name);
+        
+        if (result.success) {
+          showSuccessToast('An yi rajista cikin nasara!');
+          // Redirect to home page after short delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } else {
+          setError(result.error || 'An sami kuskure wajen yin rajista');
+          showErrorToast(result.error || 'An sami kuskure wajen yin rajista');
+          setIsLoading(false);
+        }
       } else {
-        // Mock login
-        if (email && password) {
-          localStorage.setItem('user', JSON.stringify({ name: 'User', email, id: '12345' }));
-          window.location.href = '/';
+        // Login existing user
+        const result = await authService.login(email, password);
+        
+        if (result.success) {
+          showSuccessToast('An shiga cikin nasara!');
+          // Redirect to home page after short delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
         } else {
           setError('Imel ko kalmar sirri ba daidai ba ne');
+          showErrorToast('Imel ko kalmar sirri ba daidai ba ne');
           setIsLoading(false);
         }
       }
-    }, 1000);
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError('An sami kuskure. Da fatan za a sake gwadawa.');
+      showErrorToast('An sami kuskure. Da fatan za a sake gwadawa.');
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'facebook' | 'twitter') => {
     setIsLoading(true);
     setError('');
     
-    // TODO: Implement Appwrite OAuth
-    console.log(`${provider} login attempt`);
-    
-    // Mock social login
-    setTimeout(() => {
-      const userName = provider === 'google' ? 'John Doe' : provider === 'facebook' ? 'Jane Smith' : 'Sam Wilson';
-      localStorage.setItem('user', JSON.stringify({ 
-        name: userName, 
-        email: `${userName.toLowerCase().replace(' ', '')}@${provider}.com`,
-        id: '67890',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`
-      }));
-      window.location.href = '/';
-    }, 1500);
+    try {
+      const result = await authService.loginWithOAuth(provider);
+      
+      if (!result.success) {
+        setError(`An sami kuskure wajen shiga da ${provider}`);
+        showErrorToast(`An sami kuskure wajen shiga da ${provider}`);
+        setIsLoading(false);
+      }
+      // If successful, the user will be redirected by Appwrite OAuth
+    } catch (err: any) {
+      console.error('Social login error:', err);
+      setError('An sami kuskure. Da fatan za a sake gwadawa.');
+      showErrorToast('An sami kuskure. Da fatan za a sake gwadawa.');
+      setIsLoading(false);
+    }
   };
 
   return (

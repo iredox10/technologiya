@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSun, FiMoon, FiSearch, FiUser, FiLogOut } from 'react-icons/fi';
+import { authService } from '../lib/appwriteServices';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 interface NavLink {
   name: string;
@@ -35,17 +37,26 @@ export default function Header() {
     const isDarkMode = document.documentElement.classList.contains('dark');
     setIsDark(isDarkMode);
     
-    // Check if user is logged in
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setUser(userData);
-      } catch (e) {
-        console.error('Failed to parse user data:', e);
-      }
-    }
+    // Check if user is logged in via Appwrite
+    loadCurrentUser();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const result = await authService.getCurrentUser();
+      if (result.success && result.data) {
+        const userData: User = {
+          id: result.data.$id,
+          name: result.data.name,
+          email: result.data.email,
+          avatar: result.data.prefs?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${result.data.name}`
+        };
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
+    }
+  };
 
   const toggleTheme = () => {
     const html = document.documentElement;
@@ -62,11 +73,25 @@ export default function Header() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    setShowUserMenu(false);
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      const result = await authService.logout();
+      
+      if (result.success) {
+        setUser(null);
+        setShowUserMenu(false);
+        showSuccessToast('An fita cikin nasara');
+        // Redirect to home page
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else {
+        showErrorToast('An sami kuskure wajen fita');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      showErrorToast('An sami kuskure wajen fita');
+    }
   };
 
   // Prevent hydration mismatch
