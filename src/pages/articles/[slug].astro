@@ -3,18 +3,97 @@ import MainLayout from '../../layouts/MainLayout.astro';
 import ArticleCard from '../../components/ArticleCard';
 import HausaTTS from '../../components/HausaTTS';
 import CommentSection from '../../components/CommentSection';
-import { mockArticles, getArticleBySlug, getRelatedArticles } from '../../data/mockData';
+import { articleService, categoryService, authorService } from '../../lib/appwriteServices';
+import type { Article, Category, Author } from '../../types';
 import { formatHausaDate, getReadingTime } from '../../utils/hausa';
 
-export function getStaticPaths() {
-  return mockArticles.map((article) => ({
+export async function getStaticPaths() {
+  const articlesResult = await articleService.getArticles();
+  
+  if (!articlesResult.success || !articlesResult.data) {
+    return [];
+  }
+
+  const articles = articlesResult.data.documents as unknown as Article[];
+  
+  return articles.map((article) => ({
     params: { slug: article.slug },
     props: { article },
   }));
 }
 
-const { article } = Astro.props;
-const relatedArticles = getRelatedArticles(article.id);
+const { article: propsArticle } = Astro.props;
+const { slug } = Astro.params;
+
+// Use article from props if available (static build), otherwise fetch by slug (dev mode)
+let article: Article;
+let category: Category;
+let author: Author;
+
+if (propsArticle) {
+  // Static build - use props
+  article = propsArticle;
+} else {
+  // Dev mode or client-side navigation - fetch by slug
+  const articlesResult = await articleService.getArticles();
+  if (!articlesResult.success || !articlesResult.data) {
+    return Astro.redirect('/404');
+  }
+  
+  const articles = articlesResult.data.documents as unknown as Article[];
+  const foundArticle = articles.find(a => a.slug === slug);
+  
+  if (!foundArticle) {
+    return Astro.redirect('/404');
+  }
+  
+  article = foundArticle;
+}
+
+// Fetch category data
+const categoryResult = await categoryService.getCategory(article.categoryId);
+category = categoryResult.success && categoryResult.data 
+  ? (categoryResult.data as unknown as Category)
+  : { name: 'Uncategorized', slug: 'uncategorized' } as any;
+
+// Fetch author data
+const authorResult = await authorService.getAuthor(article.authorId);
+author = authorResult.success && authorResult.data
+  ? (authorResult.data as unknown as Author)
+  : { name: 'Unknown Author', bio: '', avatar: '' } as any;
+
+// Fetch related articles (same category)
+const relatedArticlesResult = await articleService.getArticles();
+let enrichedRelatedArticles: any[] = [];
+
+if (relatedArticlesResult.success && relatedArticlesResult.data) {
+  const rawRelatedArticles = (relatedArticlesResult.data.documents as unknown as Article[])
+    .filter(a => 
+      a.categoryId === article.categoryId && 
+      a.$id !== article.$id &&
+      a.status === 'published'
+    )
+    .slice(0, 3);
+
+  // Enrich articles with category and author data
+  enrichedRelatedArticles = await Promise.all(
+    rawRelatedArticles.map(async (relArticle) => {
+      const relCategoryResult = await categoryService.getCategory(relArticle.categoryId);
+      const relAuthorResult = await authorService.getAuthor(relArticle.authorId);
+      
+      return {
+        ...relArticle,
+        category: relCategoryResult.success && relCategoryResult.data 
+          ? relCategoryResult.data 
+          : { name: 'Uncategorized', slug: 'uncategorized' },
+        author: relAuthorResult.success && relAuthorResult.data
+          ? relAuthorResult.data
+          : { name: 'Unknown', avatar: '' },
+      };
+    })
+  );
+}
+
 const shareUrl = `${Astro.site || 'https://technologiya.com'}/articles/${article.slug}`;
 const shareTitle = encodeURIComponent(article.title);
 ---
@@ -31,10 +110,10 @@ const shareTitle = encodeURIComponent(article.title);
       <!-- Category Badge -->
       <div class="mb-4">
         <a 
-          href={`/category/${article.category.slug}`}
+          href={`/category/${category.slug}`}
           class="category-badge inline-block px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full transition-colors tracking-wider uppercase"
         >
-          {article.category.name}
+          {category.name}
         </a>
       </div>
 
@@ -46,16 +125,16 @@ const shareTitle = encodeURIComponent(article.title);
       <!-- Meta Information -->
       <div class="flex flex-wrap items-center gap-6 text-gray-600 dark:text-gray-400 mb-6">
         <div class="flex items-center space-x-2">
-          {article.author.avatar && (
+          {author.avatar && (
             <img 
-              src={article.author.avatar} 
-              alt={article.author.name}
+              src={author.avatar} 
+              alt={author.name}
               class="w-10 h-10 rounded-full"
             />
           )}
           <div>
             <p class="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
-              {article.author.name}
+              {author.name}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-500">
               Marubucin labari
@@ -67,7 +146,7 @@ const shareTitle = encodeURIComponent(article.title);
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
           </svg>
-          <span>{formatHausaDate(article.publishedAt, 'full')}</span>
+          <span>{formatHausaDate(article.publishedAt || article.$createdAt, 'full')}</span>
         </div>
 
         <div class="meta-info flex items-center space-x-1 text-sm tabular-nums">
@@ -168,7 +247,7 @@ const shareTitle = encodeURIComponent(article.title);
     <!-- Text-to-Speech Component -->
     <HausaTTS 
       text={article.content} 
-      articleId={article.id}
+      articleId={article.$id}
       apiKey={import.meta.env.PUBLIC_HUGGINGFACE_API_KEY}
       client:load 
     />
@@ -197,7 +276,7 @@ const shareTitle = encodeURIComponent(article.title);
                 prose-p:text-gray-800 dark:prose-p:text-gray-200
                 prose-p:text-lg sm:prose-p:text-xl lg:prose-p:text-2xl
                 prose-p:leading-[1.8] sm:prose-p:leading-[1.9]
-                prose-p:mb-8
+                prose-p:m-8
                 
                 /* First Paragraph - Standout */
                 first:prose-p:text-xl first:prose-p:sm:text-2xl first:prose-p:lg:text-3xl
@@ -263,7 +342,7 @@ const shareTitle = encodeURIComponent(article.title);
     </div>
 
     <!-- Author Bio -->
-    {article.author.bio && (
+    {author.bio && (
       <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-12">
         <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
           <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -272,19 +351,19 @@ const shareTitle = encodeURIComponent(article.title);
           Game da Marubucin
         </h3>
         <div class="flex items-start space-x-4">
-          {article.author.avatar && (
+          {author.avatar && (
             <img 
-              src={article.author.avatar} 
-              alt={article.author.name}
+              src={author.avatar} 
+              alt={author.name}
               class="w-16 h-16 rounded-full"
             />
           )}
           <div>
             <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-1">
-              {article.author.name}
+              {author.name}
             </h4>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              {article.author.bio}
+              {author.bio}
             </p>
           </div>
         </div>
@@ -292,16 +371,16 @@ const shareTitle = encodeURIComponent(article.title);
     )}
 
     <!-- Comment Section -->
-    <CommentSection articleId={article.id} client:load />
+    <CommentSection articleId={article.$id} client:load />
 
     <!-- Related Articles -->
-    {relatedArticles.length > 0 && (
+    {enrichedRelatedArticles.length > 0 && (
       <section class="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
           Labarai Masu Alaƙa
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {relatedArticles.map((related) => (
+          {enrichedRelatedArticles.map((related) => (
             <ArticleCard article={related} client:visible />
           ))}
         </div>

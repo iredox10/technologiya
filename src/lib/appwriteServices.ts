@@ -702,10 +702,160 @@ export class SettingsService {
   }
 }
 
+// ============================================
+// COMMENT SERVICE
+// ============================================
+
+export class CommentService {
+  // Get comments for an article
+  async getComments(articleId: string) {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        [
+          Query.equal('articleId', articleId),
+          Query.equal('status', 'approved'),
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ]
+      );
+      return { success: true, data: response };
+    } catch (error: any) {
+      console.error('Get comments error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get comment by ID
+  async getComment(commentId: string) {
+    try {
+      const comment = await databases.getDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        commentId
+      );
+      return { success: true, data: comment };
+    } catch (error: any) {
+      console.error('Get comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Create comment
+  async createComment(articleId: string, userId: string, userName: string, content: string, parentId?: string, userAvatar?: string) {
+    try {
+      const comment = await databases.createDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        ID.unique(),
+        {
+          articleId,
+          userId,
+          userName,
+          userAvatar: userAvatar || '',
+          content,
+          parentId: parentId || '',
+          upvotes: 0,
+          downvotes: 0,
+          status: 'approved' // Auto-approve for now, can add moderation later
+        }
+      );
+      return { success: true, data: comment };
+    } catch (error: any) {
+      console.error('Create comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Update comment
+  async updateComment(commentId: string, content: string) {
+    try {
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        commentId,
+        { content }
+      );
+      return { success: true, data: updated };
+    } catch (error: any) {
+      console.error('Update comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Delete comment
+  async deleteComment(commentId: string) {
+    try {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        commentId
+      );
+      return { success: true };
+    } catch (error: any) {
+      console.error('Delete comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Vote on comment (upvote/downvote)
+  async voteComment(commentId: string, upvotes: number, downvotes: number) {
+    try {
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        commentId,
+        { upvotes, downvotes }
+      );
+      return { success: true, data: updated };
+    } catch (error: any) {
+      console.error('Vote comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get replies for a comment
+  async getReplies(parentId: string) {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        [
+          Query.equal('parentId', parentId),
+          Query.equal('status', 'approved'),
+          Query.orderAsc('$createdAt')
+        ]
+      );
+      return { success: true, data: response };
+    } catch (error: any) {
+      console.error('Get replies error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Moderate comment (approve/reject)
+  async moderateComment(commentId: string, status: 'approved' | 'pending' | 'rejected') {
+    try {
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        commentId,
+        { status }
+      );
+      return { success: true, data: updated };
+    } catch (error: any) {
+      console.error('Moderate comment error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+}
+
 // Export service instances
 export const authService = new AuthService();
 export const articleService = new ArticleService();
 export const categoryService = new CategoryService();
 export const authorService = new AuthorService();
 export const storageService = new StorageService();
+export const commentService = new CommentService();
 export const settingsService = new SettingsService();

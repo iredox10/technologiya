@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FiThumbsUp, FiThumbsDown, FiMessageCircle, FiSend, FiUser, FiX } from 'react-icons/fi';
+import { commentService, authService } from '../lib/appwriteServices';
+import type { Comment as AppwriteComment } from '../types';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 interface Comment {
   id: string;
@@ -26,85 +29,93 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; avatar?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ $id: string; name: string; email: string; prefs?: any } | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is logged in
+  // Check if user is logged in and load comments
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setIsLoggedIn(true);
-        setCurrentUser(userData);
-      } catch (e) {
-        console.error('Failed to parse user data:', e);
-        setIsLoggedIn(false);
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-
-    // Load mock comments
-    loadMockComments();
+    checkAuthAndLoadComments();
   }, [articleId]);
 
-  const loadMockComments = () => {
-    // Mock data - Replace with Appwrite database query
-    const mockComments: Comment[] = [
-      {
-        id: '1',
-        author: {
-          name: 'Ali Usman',
-          email: 'ali@example.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ali'
-        },
-        content: 'Labari mai ban sha\'awa sosai! Na koyi abubuwa da yawa game da wannan fasaha.',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        upvotes: 12,
-        downvotes: 2,
-        replies: [
-          {
-            id: '1-1',
-            author: {
-              name: 'Fatima Ahmad',
-              email: 'fatima@example.com',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fatima'
-            },
-            content: 'Na yarda da kai Ali. Marubucin ya yi kyau sosai.',
-            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            upvotes: 5,
-            downvotes: 0,
-            replies: []
-          }
-        ]
-      },
-      {
-        id: '2',
-        author: {
-          name: 'Ibrahim Sani',
-          email: 'ibrahim@example.com',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ibrahim'
-        },
-        content: 'Ina so in san ƙarin bayani game da wannan. Za a iya samun ƙarin misalai?',
-        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 mins ago
-        upvotes: 8,
-        downvotes: 1,
-        replies: []
-      }
-    ];
+  const checkAuthAndLoadComments = async () => {
+    // Check if user is logged in via Appwrite
+    const userResult = await authService.getCurrentUser();
+    if (userResult.success && userResult.data) {
+      setIsLoggedIn(true);
+      setCurrentUser(userResult.data);
+    } else {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+    }
 
-    setComments(mockComments);
+    // Load comments from Appwrite
+    await loadComments();
   };
 
-  const handleVote = (commentId: string, voteType: 'up' | 'down', isReply: boolean = false, parentId?: string) => {
+  const loadComments = async () => {
+    try {
+      setIsLoading(true);
+      const result = await commentService.getComments(articleId);
+      
+      if (result.success && result.data) {
+        const appwriteComments = result.data.documents as unknown as AppwriteComment[];
+        
+        // Transform Appwrite comments to UI format and organize by parent/child
+        const commentsMap = new Map<string, Comment>();
+        const rootComments: Comment[] = [];
+        
+        appwriteComments.forEach(ac => {
+          const comment: Comment = {
+            id: ac.$id,
+            author: {
+              name: ac.userName,
+              avatar: ac.userAvatar,
+              email: '' // Not stored in comments for privacy
+            },
+            content: ac.content,
+            createdAt: ac.$createdAt,
+            upvotes: ac.upvotes,
+            downvotes: ac.downvotes,
+            replies: [],
+            userVote: null // TODO: Load user votes from separate collection
+          };
+          
+          commentsMap.set(ac.$id, comment);
+          
+          if (!ac.parentId) {
+            rootComments.push(comment);
+          }
+        });
+        
+        // Attach replies to parent comments
+        appwriteComments.forEach(ac => {
+          if (ac.parentId && commentsMap.has(ac.parentId)) {
+            const parentComment = commentsMap.get(ac.parentId);
+            const replyComment = commentsMap.get(ac.$id);
+            if (parentComment && replyComment) {
+              parentComment.replies.push(replyComment);
+            }
+          }
+        });
+        
+        setComments(rootComments);
+      }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+      showErrorToast('An samu kuskure wajen ɗaukar sharhi');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVote = async (commentId: string, voteType: 'up' | 'down', isReply: boolean = false, parentId?: string) => {
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
     }
 
-    // TODO: Implement Appwrite vote logic
+    // Update UI optimistically
     setComments(prevComments => {
       return prevComments.map(comment => {
         if (comment.id === commentId && !isReply) {
@@ -159,64 +170,133 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
         return comment;
       });
     });
+
+    // Update vote count in database
+    const comment = findCommentById(commentId);
+    if (comment) {
+      try {
+        await commentService.voteComment(commentId, comment.upvotes, comment.downvotes);
+      } catch (error) {
+        console.error('Failed to update vote:', error);
+        showErrorToast('An samu kuskure wajen ƙidayar ƙuri\'a');
+      }
+    }
   };
 
-  const handleSubmitComment = (e: React.FormEvent) => {
+  const findCommentById = (id: string): Comment | null => {
+    for (const comment of comments) {
+      if (comment.id === id) return comment;
+      for (const reply of comment.replies) {
+        if (reply.id === id) return reply;
+      }
+    }
+    return null;
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !currentUser) {
       setShowLoginPrompt(true);
       return;
     }
 
     if (!newComment.trim()) return;
 
-    // TODO: Implement Appwrite comment creation
-    const comment: Comment = {
-      id: Date.now().toString(),
-      author: currentUser!,
-      content: newComment,
-      createdAt: new Date().toISOString(),
-      upvotes: 0,
-      downvotes: 0,
-      replies: [],
-      userVote: null
-    };
+    try {
+      // Create comment in Appwrite
+      const result = await commentService.createComment(
+        articleId,
+        currentUser.$id,
+        currentUser.name,
+        newComment,
+        undefined,
+        currentUser.prefs?.avatar
+      );
 
-    setComments([comment, ...comments]);
-    setNewComment('');
+      if (result.success && result.data) {
+        const appwriteComment = result.data as unknown as AppwriteComment;
+        const comment: Comment = {
+          id: appwriteComment.$id,
+          author: {
+            name: appwriteComment.userName,
+            avatar: appwriteComment.userAvatar,
+            email: currentUser.email
+          },
+          content: appwriteComment.content,
+          createdAt: appwriteComment.$createdAt,
+          upvotes: 0,
+          downvotes: 0,
+          replies: [],
+          userVote: null
+        };
+
+        setComments([comment, ...comments]);
+        setNewComment('');
+        showSuccessToast('An aika sharhi!');
+      } else {
+        showErrorToast('An samu kuskure wajen aika sharhi');
+      }
+    } catch (error) {
+      console.error('Failed to create comment:', error);
+      showErrorToast('An samu kuskure wajen aika sharhi');
+    }
   };
 
-  const handleSubmitReply = (parentId: string) => {
-    if (!isLoggedIn) {
+  const handleSubmitReply = async (parentId: string) => {
+    if (!isLoggedIn || !currentUser) {
       setShowLoginPrompt(true);
       return;
     }
 
     if (!replyContent.trim()) return;
 
-    // TODO: Implement Appwrite reply creation
-    const reply: Comment = {
-      id: `${parentId}-${Date.now()}`,
-      author: currentUser!,
-      content: replyContent,
-      createdAt: new Date().toISOString(),
-      upvotes: 0,
-      downvotes: 0,
-      replies: [],
-      userVote: null
-    };
+    try {
+      // Create reply in Appwrite
+      const result = await commentService.createComment(
+        articleId,
+        currentUser.$id,
+        currentUser.name,
+        replyContent,
+        parentId,
+        currentUser.prefs?.avatar
+      );
 
-    setComments(prevComments =>
-      prevComments.map(comment =>
-        comment.id === parentId
-          ? { ...comment, replies: [...comment.replies, reply] }
-          : comment
-      )
-    );
+      if (result.success && result.data) {
+        const appwriteComment = result.data as unknown as AppwriteComment;
+        const reply: Comment = {
+          id: appwriteComment.$id,
+          author: {
+            name: appwriteComment.userName,
+            avatar: appwriteComment.userAvatar,
+            email: currentUser.email
+          },
+          content: appwriteComment.content,
+          createdAt: appwriteComment.$createdAt,
+          upvotes: 0,
+          downvotes: 0,
+          replies: [],
+          userVote: null
+        };
 
-    setReplyContent('');
-    setReplyingTo(null);
+        setComments(prevComments =>
+          prevComments.map(comment =>
+            comment.id === parentId
+              ? { ...comment, replies: [...comment.replies, reply] }
+              : comment
+          )
+        );
+
+        setReplyContent('');
+        setReplyingTo(null);
+        showSuccessToast('An aika amsa!');
+      } else {
+        showErrorToast('An samu kuskure wajen aika amsa');
+      }
+    } catch (error) {
+      console.error('Failed to create reply:', error);
+      showErrorToast('An samu kuskure wajen aika amsa');
+    }
   };
 
   const formatTimeAgo = (date: string) => {
@@ -398,9 +478,9 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
         {isLoggedIn ? (
           <form onSubmit={handleSubmitComment} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-start space-x-3 mb-3">
-              {currentUser?.avatar ? (
+              {currentUser?.prefs?.avatar ? (
                 <img
-                  src={currentUser.avatar}
+                  src={currentUser.prefs.avatar}
                   alt={currentUser.name}
                   className="w-10 h-10 rounded-full"
                 />
@@ -447,7 +527,14 @@ export default function CommentSection({ articleId }: CommentSectionProps) {
 
       {/* Comments List */}
       <div>
-        {comments.length > 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">
+              Ana ɗaukar sharhi...
+            </p>
+          </div>
+        ) : comments.length > 0 ? (
           comments.map(comment => (
             <CommentItem key={comment.id} comment={comment} />
           ))

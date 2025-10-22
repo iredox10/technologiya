@@ -1,11 +1,53 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import ArticleCard from '../components/ArticleCard';
-import { mockArticles, getFeaturedArticles } from '../data/mockData';
+import { articleService, categoryService, authorService } from '../lib/appwriteServices';
+import type { Article, Category, Author } from '../types';
 import { FiTrendingUp } from 'react-icons/fi';
 
-const featuredArticles = getFeaturedArticles();
-const latestArticles = mockArticles.slice(0, 6);
+// Fetch articles from Appwrite
+const articlesResult = await articleService.getArticles();
+const allArticles = articlesResult.success && articlesResult.data 
+  ? (articlesResult.data.documents as unknown as Article[])
+  : [];
+
+// Filter published articles only
+const publishedArticles = allArticles.filter(article => article.status === 'published');
+
+// Get featured articles (featured flag = true)
+const rawFeaturedArticles = publishedArticles.filter(article => article.featured).slice(0, 3);
+
+// Get latest articles (sorted by creation date)
+const rawLatestArticles = publishedArticles
+  .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
+  .slice(0, 6);
+
+// Enrich articles with category and author data
+async function enrichArticle(article: Article) {
+  const [categoryResult, authorResult] = await Promise.all([
+    categoryService.getCategory(article.categoryId),
+    authorService.getAuthor(article.authorId)
+  ]);
+  
+  return {
+    ...article,
+    category: categoryResult.success && categoryResult.data 
+      ? categoryResult.data 
+      : { name: 'Uncategorized', slug: 'uncategorized' },
+    author: authorResult.success && authorResult.data
+      ? authorResult.data
+      : { name: 'Unknown', avatar: '' },
+  };
+}
+
+const featuredArticles = await Promise.all(rawFeaturedArticles.map(enrichArticle));
+const latestArticles = await Promise.all(rawLatestArticles.map(enrichArticle));
+
+// Fetch categories from Appwrite
+const categoriesResult = await categoryService.getCategories();
+const categories = categoriesResult.success && categoriesResult.data
+  ? (categoriesResult.data.documents as unknown as Category[])
+  : [];
 ---
 
 <MainLayout 
@@ -66,40 +108,22 @@ const latestArticles = mockArticles.slice(0, 6);
       </div>
       
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-6">
-        <a href="/category/wayoyi" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-          <div class="text-4xl mb-2">📱</div>
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Wayoyi
-          </h3>
-        </a>
-        
-        <a href="/category/manhajoji" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-          <div class="text-4xl mb-2">💻</div>
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Manhajoji
-          </h3>
-        </a>
-        
-        <a href="/category/bita" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-          <div class="text-4xl mb-2">⭐</div>
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Bita
-          </h3>
-        </a>
-        
-        <a href="/category/dabaru" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-          <div class="text-4xl mb-2">💡</div>
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Dabaru
-          </h3>
-        </a>
-        
-        <a href="/category/koyarwa" class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-          <div class="text-4xl mb-2">📚</div>
-          <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-            Koyarwa
-          </h3>
-        </a>
+        {categories.slice(0, 5).map((category) => (
+          <a 
+            href={`/category/${category.slug}`} 
+            class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105"
+          >
+            <div class="text-4xl mb-2">{category.icon || '📁'}</div>
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              {category.name}
+            </h3>
+            {category.articleCount !== undefined && (
+              <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                {category.articleCount} labari
+              </p>
+            )}
+          </a>
+        ))}
       </div>
     </section>
 
