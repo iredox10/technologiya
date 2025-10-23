@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 import ArticleCard from './ArticleCard';
-import { searchArticles } from '../data/mockData';
+import { articleService, categoryService, authorService } from '../lib/appwriteServices';
 import type { Article } from '../types';
 
 export default function SearchPage() {
@@ -19,7 +19,7 @@ export default function SearchPage() {
     }
   }, []);
 
-  const performSearch = (searchQuery: string) => {
+  const performSearch = async (searchQuery: string) => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
@@ -27,12 +27,39 @@ export default function SearchPage() {
 
     setIsSearching(true);
     
-    // Simulate search delay
-    setTimeout(() => {
-      const searchResults = searchArticles(searchQuery);
-      setResults(searchResults);
+    try {
+      // Search articles from Appwrite
+      const response = await articleService.searchArticles(searchQuery, 1, 100);
+      
+      if (response.success && response.data) {
+        const articles = response.data.documents as unknown as Article[];
+        
+        // Enrich articles with category and author data
+        const enrichedArticles = await Promise.all(
+          articles.map(async (article) => {
+            const [category, author] = await Promise.all([
+              article.categoryId ? categoryService.getCategory(article.categoryId) : null,
+              article.authorId ? authorService.getAuthor(article.authorId) : null,
+            ]);
+            
+            return {
+              ...article,
+              category: category || undefined,
+              author: author || undefined,
+            };
+          })
+        );
+        
+        setResults(enrichedArticles);
+      } else {
+        setResults([]);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+    } finally {
       setIsSearching(false);
-    }, 300);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -109,7 +136,7 @@ export default function SearchPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {results.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+                <ArticleCard key={article.$id} article={article} />
               ))}
             </div>
           </>

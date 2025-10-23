@@ -6,9 +6,10 @@ import CommentSection from '../../components/CommentSection';
 import { articleService, categoryService, authorService } from '../../lib/appwriteServices';
 import type { Article, Category, Author } from '../../types';
 import { formatHausaDate, getReadingTime } from '../../utils/hausa';
+import '../../styles/article.css';
 
 export async function getStaticPaths() {
-  const articlesResult = await articleService.getArticles();
+  const articlesResult = await articleService.getArticles(1, 100);
   
   if (!articlesResult.success || !articlesResult.data) {
     return [];
@@ -35,7 +36,7 @@ if (propsArticle) {
   article = propsArticle;
 } else {
   // Dev mode or client-side navigation - fetch by slug
-  const articlesResult = await articleService.getArticles();
+  const articlesResult = await articleService.getArticles(1, 100);
   if (!articlesResult.success || !articlesResult.data) {
     return Astro.redirect('/404');
   }
@@ -63,7 +64,7 @@ author = authorResult.success && authorResult.data
   : { name: 'Unknown Author', bio: '', avatar: '' } as any;
 
 // Fetch related articles (same category)
-const relatedArticlesResult = await articleService.getArticles();
+const relatedArticlesResult = await articleService.getArticles(1, 100);
 let enrichedRelatedArticles: any[] = [];
 
 if (relatedArticlesResult.success && relatedArticlesResult.data) {
@@ -103,7 +104,11 @@ const shareTitle = encodeURIComponent(article.title);
   description={article.excerpt}
   image={article.coverImage}
 >
-  <article class="container mx-auto px-4 py-8 max-w-4xl">
+  <article 
+    class="container mx-auto px-4 py-8 max-w-4xl"
+    data-article-id={article.$id}
+    data-current-views={article.views}
+  >
     
     <!-- Article Header -->
     <header class="mb-8">
@@ -253,91 +258,7 @@ const shareTitle = encodeURIComponent(article.title);
     />
 
     <!-- Article Content with Enhanced Typography -->
-    <div class="prose prose-lg lg:prose-xl dark:prose-invert max-w-none mb-12
-                /* Headings - Bold and Prominent */
-                prose-headings:font-display prose-headings:font-black prose-headings:tracking-tight
-                prose-headings:text-gray-900 dark:prose-headings:text-gray-100
-                prose-headings:scroll-mt-24
-                
-                /* H1 - Main Title */
-                prose-h1:text-4xl sm:prose-h1:text-5xl prose-h1:mb-10 prose-h1:mt-16
-                
-                /* H2 - Major Sections */
-                prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:mb-8 prose-h2:mt-16
-                prose-h2:pb-4 prose-h2:border-b-2 prose-h2:border-blue-200 dark:prose-h2:border-blue-800
-                
-                /* H3 - Subsections */
-                prose-h3:text-2xl sm:prose-h3:text-3xl prose-h3:mb-6 prose-h3:mt-12
-                
-                /* H4 - Minor Sections */
-                prose-h4:text-xl sm:prose-h4:text-2xl prose-h4:mb-5 prose-h4:mt-10
-                
-                /* Paragraphs - Optimized for Reading */
-                prose-p:text-gray-800 dark:prose-p:text-gray-200
-                prose-p:text-lg sm:prose-p:text-xl lg:prose-p:text-2xl
-                prose-p:leading-[1.8] sm:prose-p:leading-[1.9]
-                prose-p:m-8
-                
-                /* First Paragraph - Standout */
-                first:prose-p:text-xl first:prose-p:sm:text-2xl first:prose-p:lg:text-3xl
-                first:prose-p:font-light first:prose-p:text-gray-700 dark:first:prose-p:text-gray-300
-                
-                /* Links */
-                prose-a:text-blue-600 dark:prose-a:text-blue-400 
-                prose-a:no-underline prose-a:font-semibold
-                hover:prose-a:underline prose-a:underline-offset-4
-                
-                /* Strong & Emphasis */
-                prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-strong:font-bold
-                prose-em:text-gray-800 dark:prose-em:text-gray-200 prose-em:italic
-                
-                /* Lists - Spacious */
-                prose-ul:my-8 prose-ul:space-y-3
-                prose-ol:my-8 prose-ol:space-y-3
-                prose-li:text-lg sm:prose-li:text-xl lg:prose-li:text-2xl
-                prose-li:text-gray-800 dark:prose-li:text-gray-200 
-                prose-li:leading-relaxed
-                prose-li:marker:text-blue-600 dark:prose-li:marker:text-blue-400
-                prose-li:marker:font-bold
-                
-                /* Blockquotes - Styled */
-                prose-blockquote:border-l-4 prose-blockquote:border-blue-600 
-                prose-blockquote:bg-blue-50 dark:prose-blockquote:bg-blue-900/10
-                prose-blockquote:pl-8 prose-blockquote:pr-6 prose-blockquote:py-6
-                prose-blockquote:my-10 prose-blockquote:rounded-r-lg
-                prose-blockquote:italic prose-blockquote:text-xl
-                prose-blockquote:text-gray-700 dark:prose-blockquote:text-gray-300
-                
-                /* Code */
-                prose-code:text-blue-600 dark:prose-code:text-blue-400 
-                prose-code:bg-blue-50 dark:prose-code:bg-blue-900/20
-                prose-code:px-2 prose-code:py-1 prose-code:rounded 
-                prose-code:text-base prose-code:font-mono
-                prose-code:before:content-[''] prose-code:after:content-['']
-                
-                /* Code Blocks */
-                prose-pre:bg-gray-900 dark:prose-pre:bg-gray-950 
-                prose-pre:text-gray-100 prose-pre:rounded-xl
-                prose-pre:p-6 prose-pre:my-10 prose-pre:shadow-2xl
-                prose-pre:overflow-x-auto
-                
-                /* Images */
-                prose-img:rounded-2xl prose-img:shadow-2xl 
-                prose-img:my-12 prose-img:w-full
-                prose-img:border-4 prose-img:border-white dark:prose-img:border-gray-800
-                
-                /* HR */
-                prose-hr:border-gray-300 dark:prose-hr:border-gray-700 
-                prose-hr:my-12 prose-hr:border-t-2
-                
-                /* Tables */
-                prose-table:my-10 prose-table:shadow-lg 
-                prose-table:rounded-lg prose-table:overflow-hidden
-                prose-thead:bg-gray-100 dark:prose-thead:bg-gray-800
-                prose-th:p-4 prose-th:text-left prose-th:font-bold
-                prose-td:p-4 prose-td:border-t 
-                prose-td:border-gray-200 dark:prose-td:border-gray-700
-                ">
+    <div class="article-content">
       <div set:html={article.content} />
     </div>
 
@@ -389,3 +310,54 @@ const shareTitle = encodeURIComponent(article.title);
 
   </article>
 </MainLayout>
+
+<script>
+  import { Client, Databases } from 'appwrite';
+  
+  // Get article data from data attributes
+  const articleElement = document.querySelector('[data-article-id]');
+  if (!articleElement) {
+    console.error('Article element not found');
+  } else {
+    const articleId = articleElement.getAttribute('data-article-id');
+    const currentViews = parseInt(articleElement.getAttribute('data-current-views') || '0');
+    
+    // Track article view
+    async function trackView() {
+      try {
+        // Check if this article has been viewed in this session
+        const viewedKey = `viewed_${articleId}`;
+        const hasViewed = sessionStorage.getItem(viewedKey);
+        
+        if (hasViewed) {
+          return; // Don't increment if already viewed in this session
+        }
+
+        // Initialize Appwrite client
+        const client = new Client()
+          .setEndpoint(import.meta.env.PUBLIC_APPWRITE_ENDPOINT)
+          .setProject(import.meta.env.PUBLIC_APPWRITE_PROJECT_ID);
+
+        const databases = new Databases(client);
+
+        // Increment view count
+        await databases.updateDocument(
+          import.meta.env.PUBLIC_APPWRITE_DATABASE_ID,
+          import.meta.env.PUBLIC_APPWRITE_ARTICLES_COLLECTION_ID,
+          articleId!,
+          { views: currentViews + 1 }
+        );
+
+        // Mark as viewed in this session
+        sessionStorage.setItem(viewedKey, 'true');
+        
+        console.log('View tracked successfully');
+      } catch (error) {
+        console.error('Error tracking view:', error);
+      }
+    }
+
+    // Track view when page loads
+    trackView();
+  }
+</script>
