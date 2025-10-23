@@ -1,14 +1,16 @@
 import { FaFacebook, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { categoryService } from '../lib/appwriteServices';
+import type { Category } from '../types';
 
 const currentYear = new Date().getFullYear();
 
-const footerLinks = {
-  rukuni: [
-    { name: 'Wayoyi', href: '/category/wayoyi' },
-    { name: 'Manhajoji', href: '/category/manhajoji' },
-    { name: 'Bita', href: '/category/bita' },
-    { name: 'Dabaru', href: '/category/dabaru' },
-  ],
+interface FooterLink {
+  name: string;
+  href: string;
+}
+
+const staticFooterLinks = {
   bayani: [
     { name: 'Game da mu', href: '/about' },
     { name: 'Tuntuɓe mu', href: '/contact' },
@@ -25,6 +27,38 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const [categoryLinks, setCategoryLinks] = useState<FooterLink[]>([
+    { name: 'Wayoyi', href: '/category/wayoyi' },
+    { name: 'Manhajoji', href: '/category/manhajoji' },
+    { name: 'Bita', href: '/category/bita' },
+    { name: 'Dabaru', href: '/category/dabaru' },
+  ]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const result = await categoryService.getCategories();
+      if (result.success && result.data) {
+        const categories = result.data.documents as unknown as Category[];
+        const links: FooterLink[] = categories
+          .slice(0, 4) // Show only first 4 categories in footer
+          .map(cat => ({
+            name: cat.name,
+            href: `/category/${cat.slug}`
+          }));
+        
+        if (links.length > 0) {
+          setCategoryLinks(links);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      // Keep default categories if fetch fails
+    }
+  };
   return (
     <footer className="bg-gray-50 dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 mt-16">
       <div className="container mx-auto px-4 py-12">
@@ -64,7 +98,7 @@ export default function Footer() {
               Rukunin Labarai
             </h4>
             <ul className="space-y-2">
-              {footerLinks.rukuni.map((link) => (
+              {categoryLinks.map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}
@@ -83,7 +117,7 @@ export default function Footer() {
               Bayani
             </h4>
             <ul className="space-y-2">
-              {footerLinks.bayani.map((link) => (
+              {staticFooterLinks.bayani.map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}

@@ -1,18 +1,110 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
 import ArticleCard from '../../components/ArticleCard';
-import { getArticlesByCategory } from '../../data/mockData';
-import { CATEGORIES } from '../../types';
+import { articleService, categoryService, authorService } from '../../lib/appwriteServices';
+import type { Article, Category, Author } from '../../types';
 
-export function getStaticPaths() {
-  return CATEGORIES.map((category) => ({
+export async function getStaticPaths() {
+  const categoriesResult = await categoryService.getCategories();
+  
+  if (!categoriesResult.success || !categoriesResult.data) {
+    return [];
+  }
+
+  const categories = categoriesResult.data.documents as unknown as Category[];
+  
+  return categories.map((category) => ({
     params: { slug: category.slug },
-    props: { category },
+    props: { categoryId: category.$id, categorySlug: category.slug },
   }));
 }
 
-const { category } = Astro.props;
-const articles = getArticlesByCategory(category.slug);
+const { categoryId, categorySlug } = Astro.props;
+const { slug } = Astro.params;
+
+// Fetch category data
+let category: Category;
+let allCategories: Category[] = [];
+
+// Try to use categoryId from props (static build)
+if (categoryId) {
+  const categoryResult = await categoryService.getCategory(categoryId);
+  category = categoryResult.success && categoryResult.data
+    ? (categoryResult.data as unknown as Category)
+    : { name: 'Unknown', slug: categorySlug, description: '' } as any;
+} else {
+  // Dev mode - fetch all categories and find by slug
+  const categoriesResult = await categoryService.getCategories();
+  if (categoriesResult.success && categoriesResult.data) {
+    const cats = categoriesResult.data.documents as unknown as Category[];
+    const foundCategory = cats.find(c => c.slug === slug);
+    category = foundCategory || { name: 'Unknown', slug: slug, description: '' } as any;
+  } else {
+    category = { name: 'Unknown', slug: slug, description: '' } as any;
+  }
+}
+
+// Fetch all articles and filter by category
+const articlesResult = await articleService.getArticles();
+let enrichedArticles: any[] = [];
+
+if (articlesResult.success && articlesResult.data) {
+  const allArticles = articlesResult.data.documents as unknown as Article[];
+  
+  // Filter articles by category and published status
+  const categoryArticles = allArticles.filter(a => 
+    a.categoryId === category.$id && 
+    a.status === 'published'
+  );
+
+  // Enrich articles with category and author data
+  enrichedArticles = await Promise.all(
+    categoryArticles.map(async (article) => {
+      const [categoryResult, authorResult] = await Promise.all([
+        categoryService.getCategory(article.categoryId),
+        authorService.getAuthor(article.authorId)
+      ]);
+      
+      return {
+        ...article,
+        category: categoryResult.success && categoryResult.data 
+          ? categoryResult.data 
+          : { name: 'Uncategorized', slug: 'uncategorized' },
+        author: authorResult.success && authorResult.data
+          ? authorResult.data
+          : { name: 'Unknown', avatar: '' },
+      };
+    })
+  );
+}
+
+// Fetch all categories for "Browse Other Categories" section
+const allCategoriesResult = await categoryService.getCategories();
+let categoriesWithCounts: any[] = [];
+
+if (allCategoriesResult.success && allCategoriesResult.data) {
+  const cats = (allCategoriesResult.data.documents as unknown as Category[])
+    .filter(c => c.slug !== category.slug);
+  
+  // Calculate article count for each category
+  if (articlesResult.success && articlesResult.data) {
+    const allArticles = articlesResult.data.documents as unknown as Article[];
+    
+    categoriesWithCounts = cats.map(cat => {
+      const count = allArticles.filter(a => 
+        a.categoryId === cat.$id && 
+        a.status === 'published'
+      ).length;
+      
+      return {
+        ...cat,
+        articleCount: count
+      };
+    });
+  } else {
+    categoriesWithCounts = cats;
+  }
+}
 ---
 
 <MainLayout
@@ -35,14 +127,14 @@ const articles = getArticlesByCategory(category.slug);
         </p>
       )}
       <div class="mt-6 text-sm text-gray-500 dark:text-gray-500">
-        {articles.length} {articles.length === 1 ? 'labari' : 'labarai'}
+        {enrichedArticles.length} {enrichedArticles.length === 1 ? 'labari' : 'labarai'}
       </div>
     </header>
 
     <!-- Articles Grid -->
-    {articles.length > 0 ? (
+    {enrichedArticles.length > 0 ? (
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map((article) => (
+        {enrichedArticles.map((article) => (
           <ArticleCard article={article} client:visible />
         ))}
       </div>
@@ -60,14 +152,17 @@ const articles = getArticlesByCategory(category.slug);
         Duba Sauran Rukunin
       </h2>
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {CATEGORIES.filter(cat => cat.slug !== category.slug).map((cat) => (
+        {categoriesWithCounts.map((cat) => (
           <a 
             href={`/category/${cat.slug}`}
             class="group p-6 bg-white dark:bg-gray-800 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105 border border-gray-200 dark:border-gray-700"
           >
-            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-2">
               {cat.name}
             </h3>
+            <p class="text-xs text-gray-500 dark:text-gray-500">
+              {cat.articleCount || 0} {cat.articleCount === 1 ? 'labari' : 'labarai'}
+            </p>
           </a>
         ))}
       </div>

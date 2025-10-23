@@ -5,14 +5,22 @@ import { articleService, categoryService, authorService } from '../lib/appwriteS
 import type { Article, Category, Author } from '../types';
 import { FiTrendingUp } from 'react-icons/fi';
 
-// Fetch articles from Appwrite
-const articlesResult = await articleService.getArticles();
+// Fetch articles from Appwrite (get more articles, up to 100)
+const articlesResult = await articleService.getArticles(1, 100);
 const allArticles = articlesResult.success && articlesResult.data 
   ? (articlesResult.data.documents as unknown as Article[])
   : [];
 
+console.log('📊 Articles fetched:', {
+  total: allArticles.length,
+  success: articlesResult.success,
+  error: articlesResult.success ? null : articlesResult.error
+});
+
 // Filter published articles only
 const publishedArticles = allArticles.filter(article => article.status === 'published');
+
+console.log('📰 Published articles:', publishedArticles.length);
 
 // Get featured articles (featured flag = true)
 const rawFeaturedArticles = publishedArticles.filter(article => article.featured).slice(0, 3);
@@ -43,11 +51,35 @@ async function enrichArticle(article: Article) {
 const featuredArticles = await Promise.all(rawFeaturedArticles.map(enrichArticle));
 const latestArticles = await Promise.all(rawLatestArticles.map(enrichArticle));
 
-// Fetch categories from Appwrite
+console.log('✨ Featured articles:', featuredArticles.length);
+console.log('📰 Latest articles:', latestArticles.length);
+
+if (featuredArticles.length > 0) {
+  console.log('🔍 Sample featured article:', {
+    title: featuredArticles[0].title,
+    hasCategory: !!featuredArticles[0].category,
+    hasAuthor: !!featuredArticles[0].author,
+    hasCoverImage: !!featuredArticles[0].coverImage,
+  });
+}
+
+// Fetch categories from Appwrite and calculate article counts
 const categoriesResult = await categoryService.getCategories();
-const categories = categoriesResult.success && categoriesResult.data
-  ? (categoriesResult.data.documents as unknown as Category[])
-  : [];
+let categoriesWithCounts: any[] = [];
+
+if (categoriesResult.success && categoriesResult.data) {
+  const cats = categoriesResult.data.documents as unknown as Category[];
+  
+  // Calculate article count for each category
+  categoriesWithCounts = cats.map(cat => {
+    const count = publishedArticles.filter(a => a.categoryId === cat.$id).length;
+    
+    return {
+      ...cat,
+      articleCount: count
+    };
+  });
+}
 ---
 
 <MainLayout 
@@ -108,20 +140,17 @@ const categories = categoriesResult.success && categoriesResult.data
       </div>
       
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-6">
-        {categories.slice(0, 5).map((category) => (
+        {categoriesWithCounts.slice(0, 5).map((category) => (
           <a 
             href={`/category/${category.slug}`} 
             class="group p-6 bg-white dark:bg-gray-900 rounded-lg text-center hover:shadow-lg transition-all duration-300 hover:scale-105"
           >
-            <div class="text-4xl mb-2">{category.icon || '📁'}</div>
-            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 mb-2">
               {category.name}
             </h3>
-            {category.articleCount !== undefined && (
-              <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                {category.articleCount} labari
-              </p>
-            )}
+            <p class="text-xs text-gray-500 dark:text-gray-500">
+              {category.articleCount || 0} {category.articleCount === 1 ? 'labari' : 'labarai'}
+            </p>
           </a>
         ))}
       </div>

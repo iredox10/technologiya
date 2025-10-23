@@ -1,0 +1,309 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+const lastUpdated = 'Oktoba 23, 2025';
+---
+
+<MainLayout
+  title="Sharuɗɗan Sabis - Technologiya"
+  description="Karanta sharuɗɗan amfani da shafin Technologiya"
+>
+  <div class="container mx-auto px-4 py-12">
+    
+    <!-- Hero Section -->
+    <div class="max-w-4xl mx-auto text-center mb-16">
+      <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        Sharuɗɗan Sabis
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        An sabunta: {lastUpdated}
+      </p>
+    </div>
+
+    <!-- Alert Box -->
+    <div class="max-w-4xl mx-auto mb-12">
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+        <div class="flex items-start space-x-3">
+          <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <div>
+            <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+              Muhimmanci
+            </h3>
+            <p class="text-blue-800 dark:text-blue-200 text-sm">
+              Ta amfani da shafin Technologiya, kuna yarda da waɗannan sharuɗɗa da ƙa'idodi. Idan ba ku yarda ba, don Allah kada ku amfani da shafin.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-8 md:p-12 shadow-lg space-y-8">
+        
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            1. Yarda da Sharuɗɗa
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Ta shiga shafin Technologiya ("shafin", "mu", "namu"), kuna yarda da waɗannan Sharuɗɗan Sabis da Manufar Sirrinmu. Waɗannan sharuɗɗa sun shafi duk masu ziyarta, masu amfani, da sauran wanda ke samun damar shafin.
+          </p>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Muna iya sabunta waɗannan sharuɗɗa a kowane lokaci. Cigabanku na amfani da shafin bayan canje-canje yana nufin yarda da sabbin sharuɗɗan.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            2. Amfani da Shafin
+          </h2>
+          
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-4 flex items-center">
+            <svg class="w-5 h-5 text-green-600 dark:text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Abubuwan da Aka Halatta
+          </h3>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Karanta labarai da sharhi</li>
+            <li>Rubuta sharhi da kuma shiga tattaunawa</li>
+            <li>Raba labarai akan kafofin watsa labarun</li>
+            <li>Yin rajista da gina asusun mai amfani</li>
+            <li>Yin subscription don samun sabuntawa</li>
+          </ul>
+
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6 flex items-center">
+            <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Abubuwan da Aka Haramta
+          </h3>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Buga bayanan ƙarya ko zamba</li>
+            <li>Cin zarafin ko ɓatar da sauran masu amfani</li>
+            <li>Satar abun cikin shafin ba tare da izini ba</li>
+            <li>Amfani da shafin don manufofin ba bisa ƙa'ida ba</li>
+            <li>Yin ƙoƙari na ɓarna tsarin shafin</li>
+            <li>Buga spam ko tallace-tallace ba tare da izini ba</li>
+            <li>Yin amfani da automated bots</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            3. Asusun Mai Amfani
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Lokacin da kuka yi rajista a shafin:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Dole ne ku bayar da bayanai na gaskiya da kuma daidai</li>
+            <li>Ku ne ke da alhakin kiyaye asusunku</li>
+            <li>Ku ne ke da alhakin duk ayyukan da aka yi ta asusunku</li>
+            <li>Dole ne ku sanar da mu nan da nan idan kun gane shiga ba bisa ƙa'ida ba</li>
+            <li>Ba ku ba wani damar amfani da asusunku ba</li>
+          </ul>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+            Muna da haƙƙin dakatar da ko share asusunku idan kun karya waɗannan sharuɗɗa.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            4. Abun Ciki da Haƙƙin Mallaka
+          </h2>
+          
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-4">
+            4.1 Abun Cikin Mu
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Duk abun ciki a shafin (labarai, hotuna, logo, ƙira, da sauransu) mallakar Technologiya ne ko mun samu izini na amfani da su. Wannan abun ciki ana karewa ta dokokin haƙƙin mallaka.
+          </p>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Ba ku da izinin kwafi, share, ko sake bugawa ba tare da yardar mu ba.
+          </p>
+
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6">
+            4.2 Abun Cikin Mai Amfani
+          </h3>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Lokacin da kuka aika abun ciki (sharhi, ra'ayi, hotuna):
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Kuna da haƙƙin mallaka abun cikin</li>
+            <li>Kuna ba mu lasisin da ba ya ƙarewa don amfani da, share, da raba shi</li>
+            <li>Kuna tabbatar cewa abun cikin bai keta haƙƙin wani ba</li>
+            <li>Kuna ba mu izinin canza ko gyara abun cikin don dacewa da shafin</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            5. Sharhi da Tattaunawa
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Muna maraba da sharhi da ra'ayoyi, amma kuna da alhakin:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Girmama sauran masu amfani</li>
+            <li>Kada ku buga abun cikin rashin mutunci ko na cin zarafi</li>
+            <li>Kada ku buga bayanan sirri na wani</li>
+            <li>Kada ku yi spam ko tallace-tallace ba tare da izini ba</li>
+          </ul>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+            Muna da haƙƙin share ko gyara sharhi da suka karya waɗannan ƙa'idodi.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            6. Haɗin Wasu Shafuka
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Shafin mu na iya ƙunsar haɗin zuwa wasu shafuka na waje. Ba mu da iko kan abun cikin ko manufofin waɗannan shafuka. Ba mu da alhakin duk lalacewa ko asara da ta samo daga amfani da waɗannan shafuka.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            7. Ƙin Alhakin Garantin
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Shafin ana bayarwa "kamar yadda yake" ba tare da wani garantin ba. Ba mu tabbatar da:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
+            <li>Shafin zai kasance ba tare da kuskure ba</li>
+            <li>Daidaiton duk bayanan da aka bayar</li>
+            <li>Cewa sabis ba zai tsaya ba</li>
+            <li>Cewa shafin ba shi da ƙwayoyin cuta</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            8. Iyakance Alhakin
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            A matsayin yadda doka ta halatta, ba za mu kasance da alhakin:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4 mt-4">
+            <li>Asara ta kai tsaye ko kaikaice da ta faru daga amfani da shafin</li>
+            <li>Asarar bayanai ko riba</li>
+            <li>Katsewar sabis</li>
+            <li>Kuskuren da aka yi akan shafin</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            9. Karɓuwa
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Kuna yarda ku karɓe mu, masu aiki, da abokan tarayya daga duk da'awa, hasara, ko kuɗi da suka taso daga:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4 mt-4">
+            <li>Amfani da shafin</li>
+            <li>Karya waɗannan sharuɗɗa</li>
+            <li>Karya haƙƙin wani</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            10. Canje-canje ga Sabis
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Muna da haƙƙin:
+          </p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4 mt-4">
+            <li>Canza ko dakatar da shafin a kowane lokaci</li>
+            <li>Sabunta waɗannan sharuɗɗa</li>
+            <li>Iyakance samun damar wasu fasaloli</li>
+            <li>Rufe shafin gaba ɗaya</li>
+          </ul>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mt-4">
+            Ba mu da alhakin sanar da ku kafin yin canje-canje ba.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            11. Dokar da Za A Bi
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Waɗannan sharuɗɗa suna ƙarƙashin dokokin Tarayyar Najeriya. Duk sabani da ya taso daga waɗannan sharuɗɗa za a warware shi a kotunan Najeriya.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            12. Warware Sabani
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Idan kuna da sabani game da waɗannan sharuɗɗa ko shafin, da farko tuntuɓe mu a info@technologiya.com don mu ƙoƙari warware matsalar.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            13. Rabuwa
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+            Idan wani sashe na waɗannan sharuɗɗa aka gano cewa ba shi da inganci, sauran sassan za su ci gaba da aiki.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            14. Tuntuɓe Mu
+          </h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+            Idan kuna da tambayoyi game da waɗannan sharuɗɗa, tuntuɓe mu:
+          </p>
+          <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+              <li><strong>Email:</strong> info@technologiya.com</li>
+              <li><strong>Waya:</strong> +234 800 000 0000</li>
+              <li><strong>Adireshi:</strong> Kano, Najeriya</li>
+            </ul>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Acceptance Box -->
+    <div class="max-w-4xl mx-auto mt-12">
+      <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl p-8 text-center text-white">
+        <h2 class="text-2xl font-bold mb-4">
+          Karanta da Fahimta
+        </h2>
+        <p class="text-lg mb-6 opacity-90">
+          Ta amfani da Technologiya, kuna tabbatar da ku karanta, fahimta, kuma kuna yarda da waɗannan sharuɗɗan sabis da manufar sirrinmu.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a
+            href="/privacy"
+            class="px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Duba Manufar Sirri
+          </a>
+          <a
+            href="/contact"
+            class="px-6 py-3 bg-purple-700 hover:bg-purple-900 text-white font-semibold rounded-lg transition-colors border border-white/30"
+          >
+            Tuntuɓe Mu
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
