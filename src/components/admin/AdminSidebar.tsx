@@ -71,6 +71,7 @@ export default function AdminSidebar() {
     { name: 'Rubutun Sabon Labari', href: '/admin/articles/new', icon: FiPlusCircle },
     { name: 'Kalmomi', href: '/admin/categories', icon: FiFolder },
     { name: 'Marubuta', href: '/admin/authors', icon: FiUsers },
+    { name: 'Masu Amfani', href: '/admin/users', icon: FiUsers },
     { name: 'Saitunan', href: '/admin/settings', icon: FiSettings },
   ];
 

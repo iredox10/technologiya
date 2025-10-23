@@ -851,6 +851,125 @@ export class CommentService {
   }
 }
 
+// ============================================
+// USER SERVICE
+// ============================================
+
+export class UserService {
+  private databaseId = APPWRITE_CONFIG.databaseId;
+  private collectionId = APPWRITE_CONFIG.collections.users;
+
+  // Get all users with pagination
+  async getUsers(page = 1, limit = 25) {
+    try {
+      const offset = (page - 1) * limit;
+      const response = await databases.listDocuments(
+        this.databaseId,
+        this.collectionId,
+        [
+          Query.limit(limit),
+          Query.offset(offset),
+          Query.orderDesc('$createdAt')
+        ]
+      );
+      return { success: true, data: response };
+    } catch (error: any) {
+      console.error('Get users error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get user by ID
+  async getUser(userId: string) {
+    try {
+      const user = await databases.getDocument(
+        this.databaseId,
+        this.collectionId,
+        userId
+      );
+      return { success: true, data: user };
+    } catch (error: any) {
+      console.error('Get user error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get user statistics
+  async getUserStats(userId: string) {
+    try {
+      // Get comments count
+      const commentsResponse = await databases.listDocuments(
+        this.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        [Query.equal('userId', userId)]
+      );
+
+      return {
+        success: true,
+        data: {
+          commentsCount: commentsResponse.total || 0,
+          joinedDate: commentsResponse.documents[0]?.$createdAt,
+        }
+      };
+    } catch (error: any) {
+      console.error('Get user stats error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Search users
+  async searchUsers(searchTerm: string, page = 1, limit = 25) {
+    try {
+      const offset = (page - 1) * limit;
+      const response = await databases.listDocuments(
+        this.databaseId,
+        this.collectionId,
+        [
+          Query.search('name', searchTerm),
+          Query.limit(limit),
+          Query.offset(offset),
+          Query.orderDesc('$createdAt')
+        ]
+      );
+      return { success: true, data: response };
+    } catch (error: any) {
+      console.error('Search users error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Update user
+  async updateUser(userId: string, data: Partial<User>) {
+    try {
+      const updated = await databases.updateDocument(
+        this.databaseId,
+        this.collectionId,
+        userId,
+        data
+      );
+      return { success: true, data: updated };
+    } catch (error: any) {
+      console.error('Update user error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Delete user
+  async deleteUser(userId: string) {
+    try {
+      await databases.deleteDocument(
+        this.databaseId,
+        this.collectionId,
+        userId
+      );
+      return { success: true };
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+}
+
 // Export service instances
 export const authService = new AuthService();
 export const articleService = new ArticleService();
@@ -858,4 +977,5 @@ export const categoryService = new CategoryService();
 export const authorService = new AuthorService();
 export const storageService = new StorageService();
 export const commentService = new CommentService();
+export const userService = new UserService();
 export const settingsService = new SettingsService();
