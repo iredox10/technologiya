@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSun, FiMoon, FiSearch, FiUser, FiLogOut } from 'react-icons/fi';
-import { authService, categoryService } from '../lib/appwriteServices';
+import { authService } from '../lib/appwriteServices';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
-import type { Category } from '../types';
 
 interface NavLink {
   name: string;
@@ -16,17 +15,23 @@ interface User {
   avatar?: string;
 }
 
+const navLinks: NavLink[] = [
+  { name: 'Gida', href: '/' },
+  { name: 'Wayoyi', href: '/category/wayoyi' },
+  { name: 'Manhajoji', href: '/category/manhajoji' },
+  { name: 'Bita', href: '/category/bita' },
+  { name: 'Dabaru', href: '/category/dabaru' },
+  { name: 'Koyarwa', href: '/category/koyarwa' },
+];
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [navLinks, setNavLinks] = useState<NavLink[]>([
-    { name: 'Gida', href: '/' }
-  ]);
 
-  // Initialize theme, user, and categories on mount
+  // Initialize theme and user on mount
   useEffect(() => {
     setMounted(true);
     const isDarkMode = document.documentElement.classList.contains('dark');
@@ -34,8 +39,6 @@ export default function Header() {
     
     // Check if user is logged in via Appwrite
     loadCurrentUser();
-    // Load categories for navigation
-    loadCategories();
   }, []);
 
   const loadCurrentUser = async () => {
@@ -52,37 +55,6 @@ export default function Header() {
       }
     } catch (error) {
       console.error('Error loading user:', error);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const result = await categoryService.getCategories();
-      if (result.success && result.data) {
-        const categories = result.data.documents as unknown as Category[];
-        const categoryLinks: NavLink[] = categories
-          .slice(0, 5) // Show only first 5 categories
-          .map(cat => ({
-            name: cat.name,
-            href: `/category/${cat.slug}`
-          }));
-        
-        setNavLinks([
-          { name: 'Gida', href: '/' },
-          ...categoryLinks
-        ]);
-      }
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      // Fallback to default categories if fetch fails
-      setNavLinks([
-        { name: 'Gida', href: '/' },
-        { name: 'Wayoyi', href: '/category/wayoyi' },
-        { name: 'Manhajoji', href: '/category/manhajoji' },
-        { name: 'Bita', href: '/category/bita' },
-        { name: 'Dabaru', href: '/category/dabaru' },
-        { name: 'Koyarwa', href: '/category/koyarwa' },
-      ]);
     }
   };
 
