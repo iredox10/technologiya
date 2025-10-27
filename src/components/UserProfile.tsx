@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FiUser, FiMail, FiEdit2, FiSave, FiMessageCircle, FiHeart, FiClock, FiLoader } from 'react-icons/fi';
-import { authService } from '../lib/appwriteServices';
+import { FiUser, FiMail, FiEdit2, FiSave, FiMessageCircle, FiHeart, FiClock, FiLoader, FiCamera } from 'react-icons/fi';
+import { authService, commentService, articleService } from '../lib/appwriteServices';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
+import type { Comment, Article } from '../types';
 
 interface User {
   name: string;
@@ -12,13 +13,9 @@ interface User {
   joinedDate?: string;
 }
 
-interface UserComment {
-  id: string;
-  articleTitle: string;
-  articleSlug: string;
-  content: string;
-  createdAt: string;
-  upvotes: number;
+interface UserComment extends Comment {
+  articleTitle?: string;
+  articleSlug?: string;
 }
 
 export default function UserProfile() {
@@ -28,6 +25,7 @@ export default function UserProfile() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [avatarError, setAvatarError] = useState(false);
   const [comments, setComments] = useState<UserComment[]>([]);
   const [activeTab, setActiveTab] = useState<'profile' | 'comments'>('profile');
 
@@ -79,27 +77,57 @@ export default function UserProfile() {
     }
   };
 
-  const loadUserComments = (userId: string) => {
-    // TODO: Load from Appwrite
-    const mockComments: UserComment[] = [
-      {
-        id: '1',
-        articleTitle: 'AI da Ilimin Nazarin Kwamfuta',
-        articleSlug: 'ai-da-ilimin-nazarin-kwamfuta',
-        content: 'Labari mai ban sha\'awa sosai! Na koyi abubuwa da yawa.',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        upvotes: 12
-      },
-      {
-        id: '2',
-        articleTitle: 'Blockchain Technology',
-        articleSlug: 'blockchain-technology',
-        content: 'Wannan fasaha tana da yuwuwar canza duniya.',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        upvotes: 8
+  const loadUserComments = async (userId: string) => {
+    try {
+      // Fetch user comments from Appwrite
+      const result = await commentService.getUserComments(userId);
+      
+      if (!result.success || !result.data) {
+        setComments([]);
+        return;
       }
-    ];
-    setComments(mockComments);
+
+      const userComments = result.data.documents as unknown as Comment[];
+      
+      // Enrich comments with article data
+      const enrichedComments = await Promise.all(
+        userComments.map(async (comment) => {
+          try {
+            // Fetch the article to get title and slug
+            const articlesResult = await articleService.getArticles(1, 100);
+            
+            if (articlesResult.success && articlesResult.data) {
+              const articles = articlesResult.data.documents as unknown as Article[];
+              const article = articles.find(a => a.$id === comment.articleId);
+              
+              return {
+                ...comment,
+                articleTitle: article?.title || 'Unknown Article',
+                articleSlug: article?.slug || '#'
+              } as UserComment;
+            }
+            
+            return {
+              ...comment,
+              articleTitle: 'Unknown Article',
+              articleSlug: '#'
+            } as UserComment;
+          } catch (error) {
+            console.error('Error fetching article for comment:', error);
+            return {
+              ...comment,
+              articleTitle: 'Unknown Article',
+              articleSlug: '#'
+            } as UserComment;
+          }
+        })
+      );
+      
+      setComments(enrichedComments);
+    } catch (error) {
+      console.error('Failed to load user comments:', error);
+      setComments([]);
+    }
   };
 
   const handleSave = async () => {
@@ -136,6 +164,7 @@ export default function UserProfile() {
   const generateAvatar = () => {
     const newAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}-${Date.now()}`;
     setAvatar(newAvatar);
+    setAvatarError(false); // Reset error state when generating new avatar
   };
 
   const formatDate = (dateString: string) => {
@@ -170,18 +199,25 @@ export default function UserProfile() {
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Avatar */}
             <div className="relative">
-              <img
-                src={avatar || user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
-                alt={user.name}
-                className="w-24 h-24 rounded-full border-4 border-blue-100 dark:border-blue-900"
-              />
+              {!avatarError && (avatar || user.avatar) ? (
+                <img
+                  src={avatar || user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
+                  alt={user.name}
+                  className="w-24 h-24 rounded-full border-4 border-blue-100 dark:border-blue-900 object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <FiUser className="w-12 h-12 text-white" />
+                </div>
+              )}
               {isEditing && (
                 <button
                   onClick={generateAvatar}
-                  className="absolute -bottom-2 -right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                  className="absolute -bottom-2 -right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg"
                   title="Generate new avatar"
                 >
-                  <FiEdit2 className="w-4 h-4" />
+                  <FiCamera className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -332,7 +368,7 @@ export default function UserProfile() {
             {comments.length > 0 ? (
               comments.map((comment) => (
                 <div
-                  key={comment.id}
+                  key={comment.$id}
                   className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -343,7 +379,7 @@ export default function UserProfile() {
                       {comment.articleTitle}
                     </a>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(comment.createdAt)}
+                      {formatDate(comment.$createdAt)}
                     </span>
                   </div>
                   <p className="text-gray-700 dark:text-gray-300 mb-3">
@@ -353,6 +389,12 @@ export default function UserProfile() {
                     <div className="flex items-center gap-1">
                       <FiHeart className="w-4 h-4" />
                       <span>{comment.upvotes} upvotes</span>
+                    </div>
+                    <div className="px-2 py-1 rounded text-xs font-medium" style={{
+                      backgroundColor: comment.status === 'approved' ? '#10b98120' : comment.status === 'pending' ? '#f59e0b20' : '#ef444420',
+                      color: comment.status === 'approved' ? '#10b981' : comment.status === 'pending' ? '#f59e0b' : '#ef4444'
+                    }}>
+                      {comment.status === 'approved' ? 'An amince' : comment.status === 'pending' ? 'Ana jira' : 'An ƙi'}
                     </div>
                   </div>
                 </div>

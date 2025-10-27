@@ -849,6 +849,25 @@ export class CommentService {
       return { success: false, error: error.message };
     }
   }
+
+  // Get comments by user ID
+  async getUserComments(userId: string, limit = 50) {
+    try {
+      const response = await databases.listDocuments(
+        APPWRITE_CONFIG.databaseId,
+        APPWRITE_CONFIG.collections.comments,
+        [
+          Query.equal('userId', userId),
+          Query.orderDesc('$createdAt'),
+          Query.limit(limit)
+        ]
+      );
+      return { success: true, data: response };
+    } catch (error: any) {
+      console.error('Get user comments error:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // ============================================
