@@ -27,7 +27,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
           {/* Category Badge */}
           <div className="absolute top-4 left-4">
             <span className="category-badge inline-block px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full tracking-wider">
-              {article.category.name}
+              {article.category?.name || 'Uncategorized'}
             </span>
           </div>
 
@@ -63,10 +63,10 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
             <div className="flex items-center space-x-4">
               <span className="meta-info flex items-center space-x-1 tabular-nums">
                 <FiClock className="w-3.5 h-3.5" />
-                <span>{formatHausaDate(article.publishedAt, 'relative')}</span>
+                <span>{formatHausaDate(article.publishedAt || article.$createdAt, 'relative')}</span>
               </span>
               
-              {article.views && (
+              {(article.views !== undefined && article.views !== null) && (
                 <span className="stat-number flex items-center space-x-1 tabular-nums">
                   <FiEye className="w-3.5 h-3.5" />
                   <span>{article.views.toLocaleString()}</span>
@@ -81,7 +81,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
 
           {/* Author */}
           <div className="flex items-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            {article.author.avatar && (
+            {article.author?.avatar && (
               <img
                 src={article.author.avatar}
                 alt={article.author.name}
@@ -89,7 +89,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
               />
             )}
             <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
-              {article.author.name}
+              {article.author?.name || 'Unknown'}
             </span>
           </div>
         </div>

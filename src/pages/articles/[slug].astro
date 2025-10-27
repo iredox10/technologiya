@@ -123,7 +123,7 @@ const shareTitle = encodeURIComponent(article.title);
       </div>
 
       <!-- Title -->
-      <h1 class="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-100 mb-6 leading-tight tracking-tight">
+      <h1 class="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6 leading-tight tracking-tight">
         {article.title}
       </h1>
 
@@ -161,13 +161,13 @@ const shareTitle = encodeURIComponent(article.title);
           <span>{getReadingTime(article.content)}</span>
         </div>
 
-        {article.views && (
-          <div class="stat-number flex items-center space-x-1 text-sm tabular-nums">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
-            </svg>
-            <span>{article.views.toLocaleString()} kallonin</span>
+        <div class="stat-number flex items-center space-x-1 text-sm tabular-nums">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+          </svg>
+          <span><span data-view-count>{(article.views || 0).toLocaleString()}</span> kallonin</span>
+        </div>
           </div>
         )}
       </div>
@@ -322,6 +322,8 @@ const shareTitle = encodeURIComponent(article.title);
     const articleId = articleElement.getAttribute('data-article-id');
     const currentViews = parseInt(articleElement.getAttribute('data-current-views') || '0');
     
+    console.log('📊 View tracking initialized:', { articleId, currentViews });
+    
     // Track article view
     async function trackView() {
       try {
@@ -330,20 +332,36 @@ const shareTitle = encodeURIComponent(article.title);
         const hasViewed = sessionStorage.getItem(viewedKey);
         
         if (hasViewed) {
+          console.log('⏭️ Article already viewed in this session');
           return; // Don't increment if already viewed in this session
         }
 
+        const endpoint = import.meta.env.PUBLIC_APPWRITE_ENDPOINT;
+        const projectId = import.meta.env.PUBLIC_APPWRITE_PROJECT_ID;
+        const databaseId = import.meta.env.PUBLIC_APPWRITE_DATABASE_ID;
+        const collectionId = import.meta.env.PUBLIC_APPWRITE_COLLECTION_ARTICLES;
+
+        console.log('🔧 Appwrite config:', { 
+          endpoint, 
+          projectId, 
+          databaseId, 
+          collectionId,
+          articleId 
+        });
+
         // Initialize Appwrite client
         const client = new Client()
-          .setEndpoint(import.meta.env.PUBLIC_APPWRITE_ENDPOINT)
-          .setProject(import.meta.env.PUBLIC_APPWRITE_PROJECT_ID);
+          .setEndpoint(endpoint)
+          .setProject(projectId);
 
         const databases = new Databases(client);
 
+        console.log('📈 Updating view count from', currentViews, 'to', currentViews + 1);
+
         // Increment view count
-        await databases.updateDocument(
-          import.meta.env.PUBLIC_APPWRITE_DATABASE_ID,
-          import.meta.env.PUBLIC_APPWRITE_ARTICLES_COLLECTION_ID,
+        const result = await databases.updateDocument(
+          databaseId,
+          collectionId,
           articleId!,
           { views: currentViews + 1 }
         );
@@ -351,9 +369,21 @@ const shareTitle = encodeURIComponent(article.title);
         // Mark as viewed in this session
         sessionStorage.setItem(viewedKey, 'true');
         
-        console.log('View tracked successfully');
-      } catch (error) {
-        console.error('Error tracking view:', error);
+        // Update the view count on the page
+        const viewCountElements = document.querySelectorAll('[data-view-count]');
+        viewCountElements.forEach(element => {
+          element.textContent = (currentViews + 1).toLocaleString();
+        });
+        
+        console.log('✅ View tracked successfully!', result);
+      } catch (error: any) {
+        console.error('❌ Error tracking view:', error);
+        console.error('Error details:', {
+          name: error?.name,
+          message: error?.message,
+          code: error?.code,
+          type: error?.type
+        });
       }
     }
 

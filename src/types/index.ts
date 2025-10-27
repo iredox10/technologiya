@@ -21,6 +21,9 @@ export interface Article extends AppwriteDocument {
   publishedAt?: string;
   views: number;
   featured: boolean;
+  // Enriched properties (added when fetching with relations)
+  category?: Category;
+  author?: Author;
 }
 
 export interface Author extends AppwriteDocument {
