@@ -95,8 +95,11 @@ if (relatedArticlesResult.success && relatedArticlesResult.data) {
   );
 }
 
-const shareUrl = `${Astro.site || 'https://technologiya.com'}/articles/${article.slug}`;
+const baseUrl = Astro.site || 'https://technologiya.com';
+const shareUrl = `${baseUrl}/articles/${article.slug}`;
 const shareTitle = encodeURIComponent(article.title);
+const shareImage = encodeURIComponent(article.coverImage.startsWith('http') ? article.coverImage : `${baseUrl}${article.coverImage}`);
+const shareDescription = encodeURIComponent(article.excerpt);
 ---
 
 <MainLayout
@@ -200,7 +203,7 @@ const shareTitle = encodeURIComponent(article.title);
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Raba:</span>
         
         <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
+          href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareTitle}&picture=${shareImage}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
@@ -212,7 +215,7 @@ const shareTitle = encodeURIComponent(article.title);
         </a>
 
         <a
-          href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`}
+          href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}&via=technologiyaha&hashtags=technologiya&card=summary_large_image`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors"
@@ -224,7 +227,7 @@ const shareTitle = encodeURIComponent(article.title);
         </a>
 
         <a
-          href={`https://wa.me/?text=${shareTitle}%20${shareUrl}`}
+          href={`https://wa.me/?text=${shareTitle}%0A%0A${shareDescription}%0A%0A${shareUrl}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
@@ -236,7 +239,7 @@ const shareTitle = encodeURIComponent(article.title);
         </a>
 
         <a
-          href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
+          href={`https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${shareTitle}&summary=${shareDescription}&source=Technologiya`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-colors"
