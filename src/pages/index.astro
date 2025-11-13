@@ -3,7 +3,8 @@ import MainLayout from '../layouts/MainLayout.astro';
 import ArticleCard from '../components/ArticleCard';
 import { articleService, categoryService, authorService } from '../lib/appwriteServices';
 import type { Article, Category, Author } from '../types';
-import { FiTrendingUp } from 'react-icons/fi';
+import { FiTrendingUp, FiClock } from 'react-icons/fi';
+import { formatHausaDate } from '../utils/hausa';
 
 // Fetch articles from Appwrite (get more articles, up to 100)
 const articlesResult = await articleService.getArticles(1, 100);
@@ -92,89 +93,172 @@ if (categoriesResult.success && categoriesResult.data) {
   title="Technologiya - Labaran Fasaha a Hausa"
   description="Samun sabbin labarai game da wayoyi, manhajoji, da dabaru na fasaha a cikin Hausa"
 >
-  <div class="container mx-auto px-4 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
     
     <!-- Hero Section with Featured Articles -->
     {featuredArticles.length > 0 && (
-      <section class="mb-12">
-        <div class="flex items-center mb-6">
-          <FiTrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-2" />
-          <h2 class="font-mono text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            Labarai Masu Muhimmanci
-          </h2>
-        </div>
+      <section class="relative overflow-hidden pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+        <!-- Decorative Background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/30 dark:from-blue-900/10 dark:to-purple-900/10 pointer-events-none"></div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredArticles.map((article) => (
-            <ArticleCard article={article} featured={true} client:visible />
-          ))}
+        <div class="container mx-auto relative z-10">
+          <div class="flex items-center justify-center mb-8 sm:mb-10">
+            <div class="inline-flex items-center gap-3 bg-white dark:bg-gray-800 px-6 py-3 rounded-full shadow-lg border border-blue-100 dark:border-blue-900">
+              <FiTrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400 animate-pulse" />
+              <h2 class="font-mono text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                Labarai Masu Muhimmanci
+              </h2>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto">
+            {featuredArticles.map((article) => (
+              <ArticleCard article={article} featured={true} client:visible />
+            ))}
+          </div>
         </div>
       </section>
     )}
 
     <!-- Latest Articles Section -->
-    <section class="mb-12">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="font-mono text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-          Sabbin Labarai
-        </h2>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {latestArticles.map((article) => (
-          <ArticleCard article={article} client:visible />
-        ))}
+    <section class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
+      <div class="container mx-auto max-w-7xl">
+        <div class="flex items-center justify-between mb-8 sm:mb-10">
+          <h2 class="font-mono text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            Sabbin Labarai
+          </h2>
+          <div class="hidden sm:block h-0.5 flex-1 bg-gradient-to-r from-blue-600 to-transparent dark:from-blue-400 ml-6 max-w-xs"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          {latestArticles.map((article) => (
+            <ArticleCard article={article} client:visible />
+          ))}
+        </div>
       </div>
     </section>
 
     <!-- Load More Button -->
-    <div class="flex justify-center mt-8">
-      <button class="btn-primary font-mono px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-300 shadow-md hover:shadow-lg tracking-wide">
-        Duba Ƙarin Labarai
+    <div class="flex justify-center pb-16 px-4">
+      <button class="group relative inline-flex items-center justify-center px-8 sm:px-12 py-3 sm:py-4 font-mono text-sm sm:text-base font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-300 tracking-wide overflow-hidden">
+        <span class="relative z-10">Duba Ƙarin Labarai</span>
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </button>
     </div>
 
-    <!-- Categories Quick Links -->
-    <section class="mt-16 py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
-      <div class="text-center mb-8">
-        <h2 class="font-mono text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">
-          Rukunin Labarai
-        </h2>
-        <p class="text-gray-600 dark:text-gray-400">
-          Zaɓi rukunin da kake so
-        </p>
-      </div>
+    <!-- Categories Section - Redesigned -->
+    <section class="relative py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-100 via-blue-50 to-purple-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+      <!-- Decorative Elements -->
+      <div class="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full filter blur-3xl"></div>
+      <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/5 dark:bg-purple-500/10 rounded-full filter blur-3xl"></div>
       
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 px-6">
-        {categoriesWithArticles.filter(category => category.articleCount > 0).map((category) => (
-          <div class="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-md">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="font-bold text-2xl text-gray-900 dark:text-gray-100">
-                {category.name}
-              </h3>
-              <span class="text-sm text-gray-500 dark:text-gray-400">
-                {category.articleCount} {category.articleCount === 1 ? 'labari' : 'labarai'}
-              </span>
-            </div>
-
-            <div class="space-y-4">
-              {category.articles.map((article) => (
-                <div class="border-b border-gray-100 dark:border-gray-800 last:border-0 pb-4 last:pb-0">
-                  <ArticleCard article={article as Article} client:visible />
+      <div class="container mx-auto max-w-7xl relative z-10">
+        <!-- Section Header -->
+        <div class="text-center mb-12 sm:mb-16">
+          <div class="inline-block mb-4 px-6 py-2 bg-white dark:bg-gray-800 rounded-full shadow-md">
+            <span class="text-blue-600 dark:text-blue-400 font-semibold text-sm tracking-wider uppercase">
+              Zaɓi Rukunin
+            </span>
+          </div>
+          <h2 class="font-mono text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 tracking-tight">
+            Rukunin Labarai
+          </h2>
+          <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Zaɓi rukunin da kake so don samun labarai masu dacewa da sha'awar ka
+          </p>
+        </div>
+        
+        <!-- Categories Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          {categoriesWithArticles.filter(category => category.articleCount > 0).map((category, index) => (
+            <div 
+              class="group bg-white dark:bg-gray-900 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-200 dark:border-gray-800 overflow-hidden relative"
+              style={`animation-delay: ${index * 100}ms`}
+            >
+              <!-- Category Header -->
+              <div class="flex items-start justify-between mb-6 sm:mb-8">
+                <div class="flex-1">
+                  <h3 class="font-bold text-2xl sm:text-3xl text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                    {category.name}
+                  </h3>
+                  <div class="flex items-center gap-2">
+                    <div class="h-1 w-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></div>
+                    <span class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+                      {category.articleCount} {category.articleCount === 1 ? 'labari' : 'labarai'}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
+                
+                <!-- Category Icon Placeholder -->
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  {category.name.charAt(0)}
+                </div>
+              </div>
 
-            <div class="mt-6 text-center">
+              <!-- Articles List - Compact View -->
+              <div class="space-y-4 sm:space-y-5 mb-6">
+                {category.articles.slice(0, 3).map((article, idx) => (
+                  <a 
+                    href={`/articles/${article.slug}`}
+                    class="block group/item hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl p-3 sm:p-4 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-blue-900"
+                  >
+                    <div class="flex gap-3 sm:gap-4">
+                      <!-- Thumbnail -->
+                      <div class="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 shadow-md">
+                        <img
+                          src={article.coverImage}
+                          alt={article.title}
+                          class="w-full h-full object-cover transform group-hover/item:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                      
+                      <!-- Article Info -->
+                      <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 line-clamp-2 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
+                          {article.title}
+                        </h4>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-500 flex items-center gap-2 tabular-nums">
+                          <FiClock className="w-3 h-3" />
+                          <span>{formatHausaDate(article.publishedAt || article.$createdAt, 'relative')}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              <!-- View All Button -->
               <a 
                 href={`/category/${category.slug}`}
-                class="inline-block px-6 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors duration-300"
+                class="group/btn relative w-full flex items-center justify-center gap-2 px-6 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-blue-600 dark:text-blue-400 hover:text-white bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-600 dark:hover:bg-blue-600 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-600 rounded-xl transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md"
               >
-                Duba Ƙarin Labarai na {category.name}
+                <span class="relative z-10">Duba Duk Labaran {category.name}</span>
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 transform group-hover/btn:translate-x-1 transition-transform duration-300 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </a>
+
+              <!-- Decorative Corner -->
+              <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 dark:from-blue-500/10 dark:to-purple-500/10 rounded-bl-full transform translate-x-16 -translate-y-16 group-hover:scale-150 transition-transform duration-700"></div>
             </div>
+          ))}
+        </div>
+
+        <!-- Empty State -->
+        {categoriesWithArticles.filter(category => category.articleCount > 0).length === 0 && (
+          <div class="text-center py-16">
+            <div class="inline-block w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center mb-4">
+              <span class="text-4xl">📚</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Babu Labarai Yanzu
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Zato mu ƙara sabbin labarai nan ba da jimawa ba
+            </p>
           </div>
-        ))}
+        )}
       </div>
     </section>
 
