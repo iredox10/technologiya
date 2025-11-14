@@ -33,6 +33,11 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
     
     <meta name="generator" content={Astro.generator} />
     
+    <!-- Syntax Highlighting CSS -->
+    <style is:global>
+      @import 'highlight.js/styles/atom-one-dark.css';
+    </style>
+
     <!-- Primary Meta Tags -->
     <title>{title}</title>
     <meta name="title" content={title} />

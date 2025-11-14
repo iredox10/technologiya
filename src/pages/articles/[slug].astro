@@ -6,6 +6,15 @@ import { articleService, categoryService, authorService } from '../../lib/appwri
 import type { Article, Category, Author } from '../../types';
 import { formatHausaDate, getReadingTime } from '../../utils/hausa';
 import '../../styles/article.css';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+
+marked.setOptions({
+  highlight: function(code, lang) {
+    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    return hljs.highlight(code, { language }).value;
+  }
+});
 
 export async function getStaticPaths() {
   const articlesResult = await articleService.getArticles(1, 100);
@@ -16,7 +25,10 @@ export async function getStaticPaths() {
 
   const articles = articlesResult.data.documents as unknown as Article[];
   
-  return articles.map((article) => ({
+  // Only include published articles in static paths
+  const publishedArticles = articles.filter(article => article.status === 'published');
+  
+  return publishedArticles.map((article) => ({
     params: { slug: article.slug },
     props: { article },
   }));
@@ -37,14 +49,14 @@ if (propsArticle) {
   // Dev mode or client-side navigation - fetch by slug
   const articlesResult = await articleService.getArticles(1, 100);
   if (!articlesResult.success || !articlesResult.data) {
-    return Astro.redirect('/404');
+    return Astro.redirect('/');
   }
   
   const articles = articlesResult.data.documents as unknown as Article[];
-  const foundArticle = articles.find(a => a.slug === slug);
+  const foundArticle = articles.find(a => a.slug === slug && a.status === 'published');
   
   if (!foundArticle) {
-    return Astro.redirect('/404');
+    return Astro.redirect('/');
   }
   
   article = foundArticle;

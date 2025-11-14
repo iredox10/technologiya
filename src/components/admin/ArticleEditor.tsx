@@ -4,6 +4,15 @@ import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import { articleService, categoryService, authorService, storageService, authService } from '../../lib/appwriteServices';
 import type { Article, Category, Author } from '../../types';
 import RichTextEditor from './RichTextEditor';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+
+marked.setOptions({
+  highlight: function(code, lang) {
+    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    return hljs.highlight(code, { language }).value;
+  }
+});
 
 interface ArticleFormData {
   title: string;
@@ -48,6 +57,7 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
   const [showPreview, setShowPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [editorMode, setEditorMode] = useState<'rich' | 'markdown'>('rich');
 
   // Fetch categories and authors
   useEffect(() => {
@@ -223,11 +233,17 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
         }
       }
 
+      // Handle content based on editor mode
+      let contentToSave = formData.content;
+      if (editorMode === 'markdown') {
+        contentToSave = marked(formData.content);
+      }
+
       const articleData = {
         title: formData.title,
         slug: formData.slug,
         excerpt: formData.excerpt,
-        content: formData.content,
+        content: contentToSave,
         categoryId: formData.categoryId,
         authorId: formData.authorId,
         tags: formData.tags.length > 0 ? formData.tags : [], // Send empty array if no tags
@@ -360,14 +376,33 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
 
           {/* Content Editor */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Abun Ciki *
-            </label>
-            <RichTextEditor
-              content={formData.content}
-              onChange={(content) => setFormData({ ...formData, content })}
-              placeholder="Fara rubuta labarin a nan..."
-            />
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Abun Ciki *
+              </label>
+              <button
+                type="button"
+                onClick={() => setEditorMode(editorMode === 'rich' ? 'markdown' : 'rich')}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Switch to {editorMode === 'rich' ? 'Markdown' : 'Rich Text'} Editor
+              </button>
+            </div>
+            {editorMode === 'rich' ? (
+              <RichTextEditor
+                content={formData.content}
+                onChange={(content) => setFormData({ ...formData, content })}
+                placeholder="Fara rubuta labarin a nan..."
+              />
+            ) : (
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder="Fara rubuta labarin a nan... (Markdown supported)"
+                rows={15}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
           </div>
 
           {/* Metadata */}
@@ -577,7 +612,7 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
             {/* Content */}
             <div
               className="prose prose-lg dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: formData.content || '<p>Babu abun ciki...</p>' }}
+              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? marked(formData.content) : formData.content || '<p>Babu abun ciki...</p>' }}
             />
           </div>
         </div>
