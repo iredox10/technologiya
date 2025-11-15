@@ -122,14 +122,15 @@ if (relatedArticlesResult.success && relatedArticlesResult.data) {
 const baseUrl = Astro.site || 'https://technologiya.com';
 const shareUrl = `${baseUrl}/articles/${article.slug}`;
 const shareTitle = encodeURIComponent(article.title);
-const shareImage = encodeURIComponent(article.coverImage.startsWith('http') ? article.coverImage : `${baseUrl}${article.coverImage}`);
+const absoluteImageUrl = article.coverImage.startsWith('http') ? article.coverImage : `${baseUrl}${article.coverImage}`;
+const shareImage = encodeURIComponent(absoluteImageUrl);
 const shareDescription = encodeURIComponent(article.excerpt);
 ---
 
 <MainLayout
   title={`${article.title} - Technologiya`}
   description={article.excerpt}
-  image={article.coverImage}
+  image={absoluteImageUrl}
 >
   <article 
     class="container mx-auto px-4 py-8 max-w-4xl"
@@ -251,7 +252,7 @@ const shareDescription = encodeURIComponent(article.excerpt);
         </a>
 
         <a
-          href={`https://wa.me/?text=${shareTitle}%0A%0A${shareDescription}%0A%0A${encodeURIComponent(shareUrl)}`}
+          href={`https://wa.me/?text=${shareTitle}%20-%20${shareDescription}%20${encodeURIComponent(shareUrl)}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
