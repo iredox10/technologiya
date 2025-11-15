@@ -214,12 +214,11 @@ const shareDescription = encodeURIComponent(article.excerpt);
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Raba:</span>
         
         <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
           aria-label="Raba a Facebook"
-          data-quote={article.title}
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -227,7 +226,7 @@ const shareDescription = encodeURIComponent(article.excerpt);
         </a>
 
         <a
-          href={`https://twitter.com/intent/tweet?text=${shareTitle}%0A%0A${shareDescription}&url=${shareUrl}&via=technologiyaha&hashtags=technologiya,hausa,fasaha`}
+          href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${encodeURIComponent(shareUrl)}&via=technologiyaha&hashtags=technologiya,hausa,fasaha`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white transition-colors"
@@ -239,7 +238,7 @@ const shareDescription = encodeURIComponent(article.excerpt);
         </a>
 
         <a
-          href={`https://wa.me/?text=📰%20*${shareTitle}*%0A%0A${shareDescription}%0A%0A🖼️%20*Hoto:*%20${shareImage}%0A%0A🔗%20*Karanta%20cikakken%20labarin:*%0A${shareUrl}%0A%0A_Daga%20Technologiya%20-%20Labaran%20Fasaha%20a%20Hausa_`}
+          href={`https://wa.me/?text=${shareTitle}%0A%0A${shareDescription}%0A%0A${encodeURIComponent(shareUrl)}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
@@ -251,7 +250,7 @@ const shareDescription = encodeURIComponent(article.excerpt);
         </a>
 
         <a
-          href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
           target="_blank"
           rel="noopener noreferrer"
           class="p-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-colors"
