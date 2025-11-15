@@ -17,16 +17,29 @@ marked.setOptions({
 });
 
 export async function getStaticPaths() {
-  const articlesResult = await articleService.getArticles(1, 100);
+  // Fetch all articles by paginating through results
+  let allArticles: Article[] = [];
+  let page = 1;
+  const limit = 100;
+  let hasMore = true;
   
-  if (!articlesResult.success || !articlesResult.data) {
-    return [];
+  while (hasMore) {
+    const articlesResult = await articleService.getArticles(page, limit);
+    
+    if (!articlesResult.success || !articlesResult.data) {
+      break;
+    }
+    
+    const articles = articlesResult.data.documents as unknown as Article[];
+    allArticles = [...allArticles, ...articles];
+    
+    // Check if there are more articles to fetch
+    hasMore = articles.length === limit;
+    page++;
   }
-
-  const articles = articlesResult.data.documents as unknown as Article[];
   
   // Only include published articles in static paths
-  const publishedArticles = articles.filter(article => article.status === 'published');
+  const publishedArticles = allArticles.filter(article => article.status === 'published');
   
   return publishedArticles.map((article) => ({
     params: { slug: article.slug },
