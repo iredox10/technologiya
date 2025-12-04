@@ -2,107 +2,44 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-/* Custom Hausa font and styling with creative monospace fonts */
+/* Custom Vibe fonts */
 :root {
-  --font-mono: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-  --font-display: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --font-mono: "Fira Code", monospace;
+  --font-body: "Space Grotesk", sans-serif;
+  
+  /* Vibe Palette */
+  --color-bg-deep: #030712; /* Gray 950+ */
+  --color-bg-card: #0f172a; /* Slate 900 */
+  --color-border: #1e293b; /* Slate 800 */
+  --color-accent-primary: #8b5cf6; /* Violet 500 */
+  --color-accent-secondary: #06b6d4; /* Cyan 500 */
+  --color-text-main: #f3f4f6;
+  --color-text-muted: #9ca3af;
 }
 
 body {
   background-color: white;
-  color: rgb(17 24 39);
-  font-family: system-ui, -apple-system, sans-serif;
+  color: #111827;
+  font-family: var(--font-body);
   transition: background-color 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
 }
 
 .dark body {
-  background-color: rgb(17 24 39);
-  color: rgb(243 244 246);
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-main);
 }
 
-/* Headings with creative monospace styling */
-h1 {
-  font-family: var(--font-display);
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
   font-weight: 700;
   letter-spacing: -0.02em;
-  font-variant-ligatures: common-ligatures;
 }
 
-h2, h3 {
+/* Monospace elements */
+code, pre, kbd, samp, .font-mono {
   font-family: var(--font-mono);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-h4, h5, h6 {
-  font-weight: 700;
-}
-
-/* Code and technical elements */
-code, pre, kbd, samp {
-  font-family: var(--font-mono);
-  font-variant-ligatures: common-ligatures;
-}
-
-/* Brand name styling */
-.brand-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  font-variant-ligatures: discretionary-ligatures;
-}
-
-/* Category badges with monospace */
-.category-badge {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-/* Stats and numbers */
-.stat-number, .meta-info {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Buttons with character */
-.btn-primary, .btn-secondary {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-/* Custom utilities */
-.text-balance {
-  text-wrap: balance;
-}
-
-.font-mono {
-  font-family: var(--font-mono);
-}
-
-.font-display {
-  font-family: var(--font-display);
-}
-
-/* Ligature controls */
-.ligatures-normal {
-  font-variant-ligatures: common-ligatures;
-}
-
-.ligatures-none {
-  font-variant-ligatures: none;
-}
-
-.ligatures-all {
-  font-variant-ligatures: discretionary-ligatures;
-}
-
-/* Number styling */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
 }
 
 /* Smooth scrolling */
@@ -110,144 +47,52 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-/* Apply animations to elements */
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.6s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.5s ease-out forwards;
-}
-
-/* Stagger animations */
-.stagger-animation > * {
-  opacity: 0;
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.stagger-animation > *:nth-child(1) { animation-delay: 0.1s; }
-.stagger-animation > *:nth-child(2) { animation-delay: 0.2s; }
-.stagger-animation > *:nth-child(3) { animation-delay: 0.3s; }
-.stagger-animation > *:nth-child(4) { animation-delay: 0.4s; }
-.stagger-animation > *:nth-child(5) { animation-delay: 0.5s; }
-.stagger-animation > *:nth-child(6) { animation-delay: 0.6s; }
-
-/* Loading shimmer effect */
-.loading-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 20%,
-    rgba(255, 255, 255, 0.5) 60%,
-    rgba(255, 255, 255, 0)
-  );
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* Smooth hover transitions */
-a, button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Better focus styles */
-*:focus-visible {
-  outline: 2px solid rgb(59 130 246);
-  outline-offset: 2px;
+::-webkit-scrollbar-thumb {
+  background: #374151;
   border-radius: 4px;
 }
 
-.dark *:focus-visible {
-  outline-color: rgb(96 165 250);
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
 
-/* Card hover effects */
-.card-hover-effect {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* Animations */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
 }
 
-.card-hover-effect:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, rgb(59 130 246), rgb(147 51 234));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.animate-glow {
+  animation: glow 3s infinite;
 }
 
-/* Mobile optimizations */
-@media (max-width: 640px) {
-  /* Prevent text size adjustment on orientation change */
-  html {
-    -webkit-text-size-adjust: 100%;
-  }
-  
-  /* Better touch targets */
-  button, a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Reduce motion for accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Utility for Grid Background */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.light .bg-grid-pattern {
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
 }
