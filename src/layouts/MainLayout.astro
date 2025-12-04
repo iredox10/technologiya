@@ -1,13 +1,14 @@
 ---
-import BaseLayout from './BaseLayout.astro';
-import Header from '../components/Header.tsx';
-import Footer from '../components/Footer.tsx';
+import BaseLayout from "./BaseLayout.astro";
+import Header from "../components/Header.tsx";
+import Footer from "../components/Footer.tsx";
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   canonical?: string;
+  type?: "website" | "article";
 }
 
 const props = Astro.props;

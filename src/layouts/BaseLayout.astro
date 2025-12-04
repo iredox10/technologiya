@@ -1,23 +1,27 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   canonical?: string;
+  type?: "website" | "article";
 }
 
 const {
-  title = 'Technologiya - Labaran Fasaha a Hausa',
-  description = 'Samun sabbin labarai game da wayoyi, manhajoji, da dabaru na fasaha a cikin Hausa',
-  image = '/technologiya-logo.png',
-  canonical
+  title = "Technologiya - Labaran Fasaha a Hausa",
+  description = "Samun sabbin labarai game da wayoyi, manhajoji, da dabaru na fasaha a cikin Hausa",
+  image = "/technologiya-logo.png",
+  canonical,
+  type = "website",
 } = Astro.props;
 
 const siteUrl = Astro.site || new URL(Astro.url.href);
 const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl);
-const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).href;
+const ogImageURL = image.startsWith("http")
+  ? image
+  : new URL(image, siteUrl).href;
 ---
 
 <!doctype html>
@@ -25,17 +29,17 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/technologiya-small-image.png" />
     <link rel="apple-touch-icon" href="/technologiya-logo.png" />
     <link rel="shortcut icon" href="/technologiya-small-image.png" />
-    
+
     <meta name="generator" content={Astro.generator} />
-    
+
     <!-- Syntax Highlighting CSS -->
     <style is:global>
-      @import 'highlight.js/styles/atom-one-dark.css';
+      @import "highlight.js/styles/atom-one-dark.css";
     </style>
 
     <!-- Primary Meta Tags -->
@@ -43,9 +47,14 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
-    
+
+    <!-- Schema.org for Google -->
+    <meta itemprop="name" content={title} />
+    <meta itemprop="description" content={description} />
+    <meta itemprop="image" content={ogImageURL} />
+
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -55,7 +64,7 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ha_NG" />
     <meta property="og:site_name" content="Technologiya" />
-    
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
@@ -65,27 +74,35 @@ const ogImageURL = image.startsWith('http') ? image : new URL(image, siteUrl).hr
     <meta property="twitter:image:alt" content={title} />
     <meta property="twitter:site" content="@technologiyaha" />
     <meta property="twitter:creator" content="@technologiyaha" />
-    
+
     <!-- Theme Color -->
-    <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
-    
+    <meta
+      name="theme-color"
+      content="#2563eb"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#1e40af"
+      media="(prefers-color-scheme: dark)"
+    />
+
     <script is:inline>
       // Dark mode initialization - run before page renders to avoid flash
-      (function() {
-        const theme = localStorage.getItem('theme');
+      (function () {
+        const theme = localStorage.getItem("theme");
         const html = document.documentElement;
-        
+
         // Remove any existing dark class first
-        html.classList.remove('dark');
-        
-        if (theme === 'dark') {
-          html.classList.add('dark');
-        } else if (theme === 'light') {
-          html.classList.remove('dark');
+        html.classList.remove("dark");
+
+        if (theme === "dark") {
+          html.classList.add("dark");
+        } else if (theme === "light") {
+          html.classList.remove("dark");
         } else {
           // No theme set, default to light
-          html.classList.remove('dark');
+          html.classList.remove("dark");
           // Uncomment below to use system preference as default
           // if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           //   html.classList.add('dark');
