@@ -22,7 +22,7 @@ npm install
 ```
 
 3. Configure environment variables:
-   - Copy `.env.example` to `.env`
+   - Copy the provided `.env.example` file to `.env`
    - Update the values with your Appwrite credentials
 
 ```bash
@@ -30,11 +30,17 @@ cp .env.example .env
 ```
 
 Edit `.env` and add your Appwrite configuration:
-- `PUBLIC_APPWRITE_ENDPOINT` - Your Appwrite endpoint URL
+- `PUBLIC_APPWRITE_ENDPOINT` - Your Appwrite endpoint URL (e.g., https://cloud.appwrite.io/v1)
 - `PUBLIC_APPWRITE_PROJECT_ID` - Your project ID from Appwrite Console
 - `PUBLIC_APPWRITE_DATABASE_ID` - Your database ID
-- Collection IDs for articles, categories, authors, comments, and users
-- Storage bucket IDs for images
+- `PUBLIC_APPWRITE_COLLECTION_ARTICLES` - Articles collection ID
+- `PUBLIC_APPWRITE_COLLECTION_CATEGORIES` - Categories collection ID
+- `PUBLIC_APPWRITE_COLLECTION_AUTHORS` - Authors collection ID
+- `PUBLIC_APPWRITE_COLLECTION_COMMENTS` - Comments collection ID
+- `PUBLIC_APPWRITE_COLLECTION_USERS` - Users collection ID
+- `PUBLIC_APPWRITE_BUCKET_ARTICLE_IMAGES` - Article images bucket ID
+- `PUBLIC_APPWRITE_BUCKET_AUTHOR_AVATARS` - Author avatars bucket ID
+- `HUGGINGFACEAPIKEY` - (Optional) Hugging Face API key for TTS features
 
 ## Development
 
@@ -103,7 +109,7 @@ technologiya/
 
 ## Environment Variables
 
-See `.env.example` for all required environment variables.
+The repository includes a `.env.example` file that lists all required environment variables. Copy this file to `.env` and update with your actual values.
 
 ### Required Variables:
 - Appwrite endpoint and project configuration
