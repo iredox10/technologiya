@@ -1,6 +1,10 @@
 import { account, databases, storage, APPWRITE_CONFIG, Query, ID } from './appwrite';
 import type { Article, Category, Author, Comment, User } from './appwrite';
 
+const isAppwriteConfigured = () => {
+  return APPWRITE_CONFIG.projectId && APPWRITE_CONFIG.projectId !== 'your_project_id_here';
+};
+
 // ============================================
 // AUTHENTICATION SERVICE
 // ============================================
@@ -161,6 +165,11 @@ export class ArticleService {
 
   // Get all articles with pagination
   async getArticles(page = 1, limit = 10, filters?: any[]) {
+    if (!isAppwriteConfigured()) {
+      console.warn('Appwrite not configured. Returning empty articles list.');
+      return { success: true, data: { documents: [], total: 0 } };
+    }
+
     try {
       const offset = (page - 1) * limit;
       const queries = [
@@ -355,6 +364,11 @@ export class CategoryService {
   private databaseId = APPWRITE_CONFIG.databaseId;
 
   async getCategories() {
+    if (!isAppwriteConfigured()) {
+      console.warn('Appwrite not configured. Returning empty categories list.');
+      return { success: true, data: { documents: [], total: 0 } };
+    }
+
     try {
       const response = await databases.listDocuments(
         this.databaseId,
