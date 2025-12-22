@@ -123,24 +123,26 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-          transform transition-transform duration-200 ease-in-out
+          fixed inset-y-0 left-0 z-40 w-64 bg-white/95 dark:bg-[#030712]/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50
+          transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)
           lg:translate-x-0
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-700 px-6">
-          <a href="/admin" className="flex items-center space-x-2">
-            <FiEdit className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: "'Fira Code', monospace" }}>
-              Admin
+        <div className="h-20 flex items-center px-6 border-b border-gray-100 dark:border-gray-800/50">
+          <a href="/admin" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold transition-transform group-hover:scale-110">
+              A
+            </div>
+            <span className="text-lg font-bold text-gray-900 dark:text-white font-display">
+              Admin Panel
             </span>
           </a>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = typeof window !== 'undefined' && window.location.pathname === item.href;
@@ -151,19 +153,19 @@ export default function AdminSidebar() {
                 href={item.href}
                 onClick={() => handleNavClick(item.href)}
                 className={`
-                  flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                  flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200
                   ${isActive
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
                   }
                 `}
               >
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-5 h-5" />
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`} />
                   <span>{item.name}</span>
                 </div>
                 {item.badge && (
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-600 text-white">
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                     {item.badge}
                   </span>
                 )}
@@ -173,24 +175,24 @@ export default function AdminSidebar() {
         </nav>
 
         {/* User Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center space-x-3 mb-3">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800/50">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 mb-3">
             {currentAdmin?.avatar ? (
               <img
                 src={currentAdmin.avatar}
                 alt={currentAdmin.name}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-9 h-9 rounded-lg object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
                 {currentAdmin?.name?.charAt(0).toUpperCase() || 'A'}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
                 {currentAdmin?.name || 'Admin User'}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                 {currentAdmin?.email || 'admin@technologiya.com'}
               </p>
             </div>
@@ -199,7 +201,7 @@ export default function AdminSidebar() {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
           >
             <FiLogOut className="w-4 h-4" />
             <span>Fita</span>
@@ -210,7 +212,7 @@ export default function AdminSidebar() {
       {/* Mobile overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-30 bg-gray-900/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

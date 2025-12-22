@@ -1,324 +1,182 @@
 import { useState } from 'react';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
-import { FaGoogle, FaFacebook, FaXTwitter } from 'react-icons/fa6';
+import { FiMail, FiLock, FiUser, FiArrowRight, FiGithub } from 'react-icons/fi';
 import { authService } from '../lib/appwriteServices';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 export default function UserLogin() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
     try {
-      if (isSignUp) {
-        // Sign up new user
-        if (!name.trim()) {
-          setError('Da fatan za a shigar da suna');
-          setIsLoading(false);
-          return;
-        }
-
-        if (password.length < 8) {
-          setError('Kalmar sirri ta kamata ta zama aƙalla haruffa 8');
-          setIsLoading(false);
-          return;
-        }
-
-        const result = await authService.register(email, password, name);
-        
+      if (isLogin) {
+        const result = await authService.login(email, password);
         if (result.success) {
-          showSuccessToast('An yi rajista cikin nasara!');
-          // Redirect to home page after short delay
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
+          showSuccessToast('Barka da dawowa!');
+          window.location.href = '/';
         } else {
-          setError(result.error || 'An sami kuskure wajen yin rajista');
-          showErrorToast(result.error || 'An sami kuskure wajen yin rajista');
-          setIsLoading(false);
+          showErrorToast(result.error || 'Kuskure wajen shiga');
         }
       } else {
-        // Login existing user
-        const result = await authService.login(email, password);
-        
+        const result = await authService.createAccount(email, password, name);
         if (result.success) {
-          showSuccessToast('An shiga cikin nasara!');
-          // Redirect to home page after short delay
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
+          showSuccessToast('An ƙirƙiri asusu! Yanzu za ku iya shiga.');
+          setIsLogin(true);
         } else {
-          setError('Imel ko kalmar sirri ba daidai ba ne');
-          showErrorToast('Imel ko kalmar sirri ba daidai ba ne');
-          setIsLoading(false);
+          showErrorToast(result.error || 'Kuskure wajen yin rajista');
         }
       }
-    } catch (err: any) {
-      console.error('Auth error:', err);
-      setError('An sami kuskure. Da fatan za a sake gwadawa.');
-      showErrorToast('An sami kuskure. Da fatan za a sake gwadawa.');
-      setIsLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (provider: 'google' | 'facebook' | 'twitter') => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      const result = await authService.loginWithOAuth(provider);
-      
-      if (!result.success) {
-        setError(`An sami kuskure wajen shiga da ${provider}`);
-        showErrorToast(`An sami kuskure wajen shiga da ${provider}`);
-        setIsLoading(false);
-      }
-      // If successful, the user will be redirected by Appwrite OAuth
-    } catch (err: any) {
-      console.error('Social login error:', err);
-      setError('An sami kuskure. Da fatan za a sake gwadawa.');
-      showErrorToast('An sami kuskure. Da fatan za a sake gwadawa.');
+    } catch (error) {
+      showErrorToast('An sami matsala. Da fatan za a sake gwadawa.');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
-      <div className="max-w-md w-full">
-        {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg">
-            <FiUser className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontFamily: "'Fira Code', monospace" }}>
-            {isSignUp ? 'Ƙirƙiri Asusu' : 'Shiga'}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {isSignUp ? 'Yi rajista don yin sharhi da ƙarin abubuwa' : 'Shiga don yin sharhi da ƙarin abubuwa'}
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#030712] relative overflow-hidden px-4 py-20">
+      
+      {/* Background Decoration */}
+      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-        {/* Social Login Buttons */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-          <div className="space-y-3 mb-6">
-            <button
-              onClick={() => handleSocialLogin('google')}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FaGoogle className="w-5 h-5 text-red-500" />
-              Shiga da Google
-            </button>
-
-            <button
-              onClick={() => handleSocialLogin('facebook')}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FaFacebook className="w-5 h-5 text-blue-600" />
-              Shiga da Facebook
-            </button>
-
-            <button
-              onClick={() => handleSocialLogin('twitter')}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FaXTwitter className="w-5 h-5 text-gray-900 dark:text-white" />
-              Shiga da X (Twitter)
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+      <div className="w-full max-w-md relative z-10">
+        
+        {/* Card */}
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-8 sm:p-10">
+          
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-6 shadow-lg shadow-blue-600/30">
+              T
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                Ko
-              </span>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">
+              {isLogin ? 'Barka da Dawowa' : 'Ƙirƙiri Asusu'}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              {isLogin ? 'Shiga don ci gaba da karatu' : 'Shiga cikin duniyar fasaha a yau'}
+            </p>
           </div>
 
-          {/* Email/Password Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Field (Sign Up Only) */}
-            {isSignUp && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Suna
-                </label>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Suna</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder="Sunan ka"
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-900 dark:text-white"
+                    placeholder="Sunan ku na cikakke"
+                    required={!isLogin}
                   />
                 </div>
               </div>
             )}
 
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Adireshin Imel
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiMail className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-900 dark:text-white"
+                  placeholder="sunanku@misali.com"
                   required
-                  placeholder="email@example.com"
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
             </div>
 
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kalmar Sirri
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Kalmar Sirri</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="h-5 w-5 text-gray-400" />
-                </div>
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-gray-900 dark:text-white"
                   placeholder="••••••••"
-                  className="block w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  required
+                  minLength={8}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? (
-                    <FiEyeOff className="h-5 w-5" />
-                  ) : (
-                    <FiEye className="h-5 w-5" />
-                  )}
-                </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password (Login Only) */}
-            {!isSignUp && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                    Ka tuna da ni
-                  </label>
-                </div>
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                    Ka manta kalmar sirri?
-                  </a>
-                </div>
+            {isLogin && (
+              <div className="flex justify-end">
+                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+                  Kun manta kalmar sirri?
+                </a>
               </div>
             )}
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              </div>
-            )}
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {isSignUp ? 'Ana ƙirƙiri...' : 'Ana shiga...'}
-                </>
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                isSignUp ? 'Ƙirƙiri Asusu' : 'Shiga'
+                <>
+                  {isLogin ? 'Shiga' : 'Yi Rajista'}
+                  <FiArrowRight />
+                </>
               )}
             </button>
           </form>
 
-          {/* Toggle Sign Up / Login */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError('');
-              }}
-              className="text-sm text-gray-600 dark:text-gray-400"
-            >
-              {isSignUp ? (
-                <>
-                  Ka riga ka yi rajista?{' '}
-                  <span className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                    Shiga
-                  </span>
-                </>
-              ) : (
-                <>
-                  Ba ka da asusu?{' '}
-                  <span className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                    Ƙirƙiri asusu
-                  </span>
-                </>
-              )}
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-gray-900 text-gray-500">Ko shiga da</span>
+            </div>
+          </div>
+
+          {/* Social Login (Mock) */}
+          <div className="grid grid-cols-2 gap-4">
+            <button className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 font-medium text-sm">
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Google
+            </button>
+            <button className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 font-medium text-sm">
+              <FiGithub className="w-5 h-5" />
+              GitHub
             </button>
           </div>
-        </div>
 
-        {/* Back to Site */}
-        <div className="text-center mt-6">
-          <a href="/" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            ← Koma zuwa shafin
-          </a>
-        </div>
+          {/* Toggle */}
+          <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            {isLogin ? "Ba ku da asusu?" : "Kuna da asusu?"}{' '}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="font-bold text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              {isLogin ? 'Ƙirƙiri yanzu' : 'Shiga anan'}
+            </button>
+          </p>
 
-        {/* Admin/Author Login Link */}
-        <div className="mt-4 text-center">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Ka Admin ko Marubuta ne?{' '}
-            <a href="/login" className="font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-              Shiga Admin/Author Panel
-            </a>
-          </div>
         </div>
       </div>
     </div>

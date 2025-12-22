@@ -13,7 +13,7 @@ const allArticles = articlesResult.success && articlesResult.data
 
 const publishedArticles = allArticles.filter(article => article.status === 'published');
 // Get top 3 featured articles
-const rawFeaturedArticles = publishedArticles.filter(article => article.featured).slice(0, 3);
+const rawFeaturedArticles = publishedArticles.filter(article => article.featured).slice(0, 5);
 const rawLatestArticles = publishedArticles
   .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
   .slice(0, 9);
@@ -40,7 +40,7 @@ const latestArticles = await Promise.all(rawLatestArticles.map(enrichArticle));
 
 // Split featured articles
 const mainFeatured = featuredArticles[0];
-const subFeatured = featuredArticles.slice(1, 3);
+const subFeatured = featuredArticles.slice(1, 5); // Take articles from index 1 up to index 4 (5 total articles)
 
 const categoriesResult = await categoryService.getCategories();
 let categories = [];
@@ -122,13 +122,13 @@ const getCategoryColor = (slug: string) => {
           </div>
 
           {/* Secondary Featured Articles (Right - Stacked) */}
-          <div class="lg:col-span-4 flex flex-col gap-6 h-full">
+          <div class="lg:col-span-4 flex flex-col gap-6 h-full overflow-y-auto pr-2 custom-scrollbar"> {/* Added overflow-y-auto and pr-2 for scrollbar, custom-scrollbar class for styling */}
             {subFeatured.map((article) => (
-              <div class="relative flex-1 rounded-3xl overflow-hidden group h-[300px] lg:h-auto">
+              <div class="relative flex-1 rounded-3xl overflow-hidden group h-[280px] lg:h-auto min-h-[250px]"> {/* Adjusted height and added min-h */}
                 <img 
                   src={article.coverImage} 
                   alt={article.title}
-                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent opacity-90"></div>
                 

@@ -2,10 +2,7 @@
 import AuthorLayout from '../../../../layouts/AuthorLayout.astro';
 import ArticleEditor from '../../../../components/admin/ArticleEditor.tsx';
 
-export function getStaticPaths() {
-  // Return empty array for dev mode - Astro will generate pages on-demand
-  return [];
-}
+export const prerender = false;
 
 const { id } = Astro.params;
 

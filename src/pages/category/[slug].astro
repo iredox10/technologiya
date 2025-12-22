@@ -5,20 +5,7 @@ import { articleService, categoryService, authorService } from '../../lib/appwri
 import type { Article, Category, Author } from '../../types';
 import { FiFolder } from 'react-icons/fi';
 
-export async function getStaticPaths() {
-  const categoriesResult = await categoryService.getCategories();
-  
-  if (!categoriesResult.success || !categoriesResult.data) {
-    return [];
-  }
-
-  const categories = categoriesResult.data.documents as unknown as Category[];
-  
-  return categories.map((category) => ({
-    params: { slug: category.slug },
-    props: { categoryId: category.$id, categorySlug: category.slug },
-  }));
-}
+export const prerender = false;
 
 const { categoryId, categorySlug } = Astro.props;
 const { slug } = Astro.params;

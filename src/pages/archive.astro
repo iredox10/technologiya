@@ -1,0 +1,181 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ArticleCard from '../components/ArticleCard';
+import { articleService, categoryService, authorService } from '../lib/appwriteServices';
+import type { Article, Category, Author } from '../types';
+import { FiFilter, FiGrid, FiList } from 'react-icons/fi';
+
+// Fetch all categories
+const categoriesResult = await categoryService.getCategories();
+let categories: Category[] = [];
+if (categoriesResult.success && categoriesResult.data) {
+  categories = categoriesResult.data.documents as unknown as Category[];
+}
+
+// Fetch all articles
+const articlesResult = await articleService.getArticles(1, 100); // Fetch up to 100 articles
+let allArticles: Article[] = [];
+
+if (articlesResult.success && articlesResult.data) {
+  allArticles = articlesResult.data.documents as unknown as Article[];
+}
+
+// Filter published only
+const publishedArticles = allArticles.filter(a => a.status === 'published');
+
+// Enrich articles
+async function enrichArticle(article: Article) {
+  const [categoryResult, authorResult] = await Promise.all([
+    categoryService.getCategory(article.categoryId),
+    authorService.getAuthor(article.authorId)
+  ]);
+  
+  return {
+    ...article,
+    category: categoryResult.success && categoryResult.data 
+      ? categoryResult.data 
+      : { name: 'Uncategorized', slug: 'uncategorized' },
+    author: authorResult.success && authorResult.data
+      ? authorResult.data
+      : { name: 'Unknown', avatar: '' },
+  };
+}
+
+const enrichedArticles = await Promise.all(publishedArticles.map(enrichArticle));
+
+// Sort by date descending
+enrichedArticles.sort((a, b) => 
+  new Date(b.publishedAt || b.$createdAt).getTime() - new Date(a.publishedAt || a.$createdAt).getTime()
+);
+---
+
+<MainLayout
+  title="Taskar Labarai - Technologiya"
+  description="Duba dukannin labarai, bita, da koyarwa da aka wallafa a Technologiya"
+>
+  <div class="min-h-screen bg-gray-50 dark:bg-[#030712] pt-24 pb-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Header -->
+      <div class="mb-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white font-display mb-4">
+          Taskar Labarai
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 max-w-2xl">
+          Bincika dukannin labaran da muka wallafa. Yi amfani da matatun (filters) da ke ƙasa don nemo abin da kuke so.
+        </p>
+      </div>
+
+      <!-- Controls Bar (Filter & View) -->
+      <div class="sticky top-20 z-30 bg-gray-50/95 dark:bg-[#030712]/95 backdrop-blur-sm py-4 -mx-4 px-4 sm:mx-0 sm:px-0 mb-8 border-b border-gray-200 dark:border-gray-800 transition-all duration-300" id="filter-bar">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          
+          <!-- Category Filter (Horizontal Scroll) -->
+          <div class="w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+            <div class="flex space-x-2" id="category-filters">
+              <button 
+                class="filter-btn active px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                data-category="all"
+              >
+                Duka
+              </button>
+              {categories.map((cat) => (
+                <button 
+                  class="filter-btn px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+                  data-category={cat.slug}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <!-- View Toggle (Optional - Hidden on mobile usually but good for archive) -->
+          <div class="hidden sm:flex items-center bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+            <button class="p-2 rounded-md text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-gray-700 shadow-sm">
+              <FiGrid className="w-4 h-4" />
+            </button>
+            {/* List view implementation would require state change, keeping grid for now */}
+            <button class="p-2 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <FiList className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Articles Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="articles-grid">
+        {enrichedArticles.map((article) => (
+          <div class="article-item" data-category={article.category?.slug}>
+            <ArticleCard article={article} />
+          </div>
+        ))}
+      </div>
+
+      <!-- Empty State (Hidden by default) -->
+      <div id="no-results" class="hidden text-center py-20">
+        <div class="inline-block p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+          <FiFilter className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Babu labarai a wannan rukuni</h3>
+        <p class="text-gray-500 dark:text-gray-400">Gwada zaɓar wani rukunin daban.</p>
+      </div>
+
+    </div>
+  </div>
+</MainLayout>
+
+<script>
+  // Client-side filtering logic
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const articles = document.querySelectorAll('.article-item');
+    const noResults = document.getElementById('no-results');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active class from all
+        filterBtns.forEach(b => {
+          b.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active');
+          b.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'border', 'border-gray-200', 'dark:border-gray-700');
+        });
+
+        // Add active class to clicked
+        btn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'border', 'border-gray-200', 'dark:border-gray-700');
+        btn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'shadow-blue-600/20', 'active');
+
+        const category = btn.getAttribute('data-category');
+        let visibleCount = 0;
+
+        articles.forEach(article => {
+          const articleCategory = article.getAttribute('data-category');
+          if (category === 'all' || articleCategory === category) {
+            (article as HTMLElement).style.display = 'block';
+            visibleCount++;
+          } else {
+            (article as HTMLElement).style.display = 'none';
+          }
+        });
+
+        // Show/Hide empty state
+        if (visibleCount === 0) {
+          noResults?.classList.remove('hidden');
+        } else {
+          noResults?.classList.add('hidden');
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  /* Hide scrollbar for chrome/safari/opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+</style>
