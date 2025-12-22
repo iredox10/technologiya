@@ -5,6 +5,8 @@ import { articleService, categoryService, authorService } from '../lib/appwriteS
 import type { Article, Category } from '../types';
 import { FiArrowRight, FiSmartphone, FiMonitor, FiCpu, FiWifi, FiLayers, FiArrowUpRight } from 'react-icons/fi';
 
+export const prerender = false;
+
 // Data Fetching
 const articlesResult = await articleService.getArticles(1, 100);
 const allArticles = articlesResult.success && articlesResult.data 
