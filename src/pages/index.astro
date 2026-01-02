@@ -10,7 +10,7 @@ export const prerender = false;
 // Data Fetching
 const articlesResult = await articleService.getArticles(1, 100);
 const allArticles = articlesResult.success && articlesResult.data 
-  ? (articlesResult.data.documents as unknown as Article[])
+  ? (articlesResult.data.documents as any[])
   : [];
 
 const publishedArticles = allArticles.filter(article => article.status === 'published');
@@ -20,7 +20,7 @@ const rawLatestArticles = publishedArticles
   .sort((a, b) => new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime())
   .slice(0, 9);
 
-async function enrichArticle(article: Article) {
+async function enrichArticle(article: any) {
   const [categoryResult, authorResult] = await Promise.all([
     categoryService.getCategory(article.categoryId),
     authorService.getAuthor(article.authorId)
@@ -34,7 +34,7 @@ async function enrichArticle(article: Article) {
     author: authorResult.success && authorResult.data
       ? authorResult.data
       : { name: 'Unknown', avatar: '' },
-  };
+  } as any;
 }
 
 const featuredArticles = await Promise.all(rawFeaturedArticles.map(enrichArticle));
@@ -45,9 +45,9 @@ const mainFeatured = featuredArticles[0];
 const subFeatured = featuredArticles.slice(1, 5); // Take articles from index 1 up to index 4 (5 total articles)
 
 const categoriesResult = await categoryService.getCategories();
-let categories = [];
+let categories: any[] = [];
 if (categoriesResult.success && categoriesResult.data) {
-  categories = categoriesResult.data.documents as unknown as Category[];
+  categories = (categoriesResult.data as any).documents || [];
 }
 
 const getCategoryIcon = (slug: string) => {

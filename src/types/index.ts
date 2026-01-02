@@ -72,33 +72,58 @@ export interface Settings extends AppwriteDocument {
   category: 'site' | 'seo' | 'users' | 'email' | 'security';
 }
 
-export const CATEGORIES: Category[] = [
+export const CATEGORIES: any[] = [
   {
-    id: '1',
+    $id: '1',
+    $createdAt: '',
+    $updatedAt: '',
+    $permissions: [],
+    $collectionId: '',
+    $databaseId: '',
     name: 'Wayoyi',
     slug: 'wayoyi',
     description: 'Labarai game da sabbin wayoyi da na\'urorin hannu'
   },
   {
-    id: '2',
+    $id: '2',
+    $createdAt: '',
+    $updatedAt: '',
+    $permissions: [],
+    $collectionId: '',
+    $databaseId: '',
     name: 'Manhajoji',
     slug: 'manhajoji',
     description: 'Sabbin manhajoji da yadda ake amfani da su'
   },
   {
-    id: '3',
+    $id: '3',
+    $createdAt: '',
+    $updatedAt: '',
+    $permissions: [],
+    $collectionId: '',
+    $databaseId: '',
     name: 'Bita',
     slug: 'bita',
     description: 'Bita mai zurfi na na\'urorin fasaha'
   },
   {
-    id: '4',
+    $id: '4',
+    $createdAt: '',
+    $updatedAt: '',
+    $permissions: [],
+    $collectionId: '',
+    $databaseId: '',
     name: 'Dabaru',
     slug: 'dabaru',
     description: 'Dabaru da shawarwari na amfani da fasaha'
   },
   {
-    id: '5',
+    $id: '5',
+    $createdAt: '',
+    $updatedAt: '',
+    $permissions: [],
+    $collectionId: '',
+    $databaseId: '',
     name: 'Koyarwa',
     slug: 'koyarwa',
     description: 'Koyarwar yadda ake yin abubuwa'
