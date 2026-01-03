@@ -7,14 +7,8 @@ import RichTextEditor from './RichTextEditor';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 
-marked.setOptions({
-  highlight: function(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  }
-});
-
 interface ArticleFormData {
+
   title: string;
   slug: string;
   excerpt: string;
@@ -25,8 +19,11 @@ interface ArticleFormData {
   coverImage: string;
   coverImageFile: File | null;
   status: 'draft' | 'published' | 'archived';
-  featured: boolean;
-}
+    featured: boolean;
+  }
+
+  const [shareToSocial, setShareToSocial] = useState(true);
+
 
 interface ArticleEditorProps {
   articleId?: string;
@@ -236,8 +233,9 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
       // Handle content based on editor mode
       let contentToSave = formData.content;
       if (editorMode === 'markdown') {
-        contentToSave = marked(formData.content);
+        contentToSave = await (marked as any).parse(formData.content);
       }
+
 
       const articleData = {
         title: formData.title,
@@ -259,8 +257,27 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
         
         if (result.success) {
           showSuccessToast(publish ? 'An buga labarin!' : 'An sabunta daftarin!');
+          
+          if (publish && shareToSocial) {
+            try {
+              await fetch('/api/share-article', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: formData.title,
+                  excerpt: formData.excerpt,
+                  slug: formData.slug,
+                  image: coverImageUrl,
+                  platforms: ['telegram', 'whatsapp']
+                })
+              });
+            } catch (err) {
+              console.error('Share error:', err);
+            }
+          }
+
           setTimeout(() => {
-            window.location.href = '/admin/articles';
+            window.location.href = isAuthorMode ? '/author/articles' : '/admin/articles';
           }, 1500);
         } else {
           showErrorToast('An samu kuskure wajen sabunta labarin: ' + result.error);
@@ -271,8 +288,27 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
         
         if (result.success) {
           showSuccessToast(publish ? 'An buga labarin!' : 'An adana a matsayin daftari!');
+          
+          if (publish && shareToSocial) {
+            try {
+              await fetch('/api/share-article', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: formData.title,
+                  excerpt: formData.excerpt,
+                  slug: formData.slug,
+                  image: coverImageUrl,
+                  platforms: ['telegram', 'whatsapp']
+                })
+              });
+            } catch (err) {
+              console.error('Share error:', err);
+            }
+          }
+
           setTimeout(() => {
-            window.location.href = '/admin/articles';
+            window.location.href = isAuthorMode ? '/author/articles' : '/admin/articles';
           }, 1500);
         } else {
           showErrorToast('An samu kuskure wajen ƙara labarin: ' + result.error);
@@ -539,8 +575,8 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
             </div>
           </div>
 
-          {/* Featured Article Toggle */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          {/* Featured Article & Social Toggle */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -554,6 +590,23 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
                 </span>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Nuna wannan labarin a babban shafi
+                </p>
+              </div>
+            </label>
+
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={shareToSocial}
+                onChange={(e) => setShareToSocial(e.target.checked)}
+                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Raba a Social Media (Telegram & WhatsApp)
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Zai raba labarin kai tsaye idan ka buga shi
                 </p>
               </div>
             </label>
@@ -612,7 +665,7 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
             {/* Content */}
             <div
               className="prose prose-lg dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? marked(formData.content) : formData.content || '<p>Babu abun ciki...</p>' }}
+              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? (marked as any).parse(formData.content) : formData.content || '<p>Babu abun ciki...</p>' }}
             />
           </div>
         </div>
