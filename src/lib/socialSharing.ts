@@ -19,7 +19,7 @@ export async function shareToTelegram(params: ShareParams) {
   const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
   // Format message using Markdown
-  const message = `*${params.title}*\n\n${params.excerpt}\n\n[Karanta Labarin anan](${articleUrl})\n\n_${footerText}_`;
+  const message = `${articleUrl}\n\n_${footerText}_`;
 
   try {
     const url = `https://api.telegram.org/bot${token}/${params.image ? 'sendPhoto' : 'sendMessage'}`;
@@ -64,7 +64,7 @@ export async function shareToWhatsApp(params: ShareParams) {
   
   // Note: WhatsApp formatting varies by provider. 
   // This is a generic implementation.
-  const message = `*${params.title}*\n\n${params.excerpt}\n\nKaranta cikakken labarin anan:\n${articleUrl}\n\n_${footerText}_`;
+  const message = `${articleUrl}\n\n_${footerText}_`;
 
   try {
     const response = await fetch(apiUrl, {
