@@ -107,24 +107,23 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-        >
-          {isMobileMenuOpen ? (
-            <FiX className="w-6 h-6" />
-          ) : (
-            <FiMenu className="w-6 h-6" />
-          )}
-        </button>
-      </div>
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 right-4 z-[60] p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 shadow-sm transition-all active:scale-90"
+        aria-label="Toggle Menu"
+      >
+        {isMobileMenuOpen ? (
+          <FiX className="w-6 h-6" />
+        ) : (
+          <FiMenu className="w-6 h-6" />
+        )}
+      </button>
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-white/95 dark:bg-[#030712]/95 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-800/50
-          transform transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)
+          fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-[#030712] border-r border-gray-200 dark:border-gray-800
+          transform transition-transform duration-300 ease-in-out
           lg:translate-x-0
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}

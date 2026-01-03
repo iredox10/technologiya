@@ -8,7 +8,6 @@ import { marked } from 'marked';
 import hljs from 'highlight.js';
 
 interface ArticleFormData {
-
   title: string;
   slug: string;
   excerpt: string;
@@ -19,11 +18,8 @@ interface ArticleFormData {
   coverImage: string;
   coverImageFile: File | null;
   status: 'draft' | 'published' | 'archived';
-    featured: boolean;
-  }
-
-  const [shareToSocial, setShareToSocial] = useState(true);
-
+  featured: boolean;
+}
 
 interface ArticleEditorProps {
   articleId?: string;
@@ -46,6 +42,7 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
     featured: false,
   });
 
+  const [shareToSocial, setShareToSocial] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [currentAuthorId, setCurrentAuthorId] = useState<string>('');
@@ -236,7 +233,6 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
         contentToSave = await (marked as any).parse(formData.content);
       }
 
-
       const articleData = {
         title: formData.title,
         slug: formData.slug,
@@ -322,8 +318,16 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto px-4 sm:px-0">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -335,32 +339,32 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
       </div>
 
       {/* Header Actions */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors space-x-2"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors space-x-2"
           >
             <FiEye className="w-4 h-4" />
             <span>{showPreview ? 'Gyara' : 'Duba Samfurin'}</span>
           </button>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <button
             onClick={() => handleSave(false)}
             disabled={isSaving}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors space-x-2 disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors space-x-2 disabled:opacity-50"
           >
             <FiSave className="w-4 h-4" />
-            <span>Adana Daftari</span>
+            <span>Daftari</span>
           </button>
           <button
             onClick={() => handleSave(true)}
             disabled={isSaving}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors space-x-2 disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors space-x-2 disabled:opacity-50 shadow-lg shadow-blue-600/20"
           >
             <FiSave className="w-4 h-4" />
-            <span>{isSaving ? 'Ana adanawa...' : (isEditing ? 'Sabunta' : 'Buga Labarin')}</span>
+            <span>{isSaving ? 'Ana adanawa...' : (isEditing ? 'Sabunta' : 'Buga')}</span>
           </button>
         </div>
       </div>
@@ -368,9 +372,9 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
       {!showPreview ? (
         /* Edit Mode */
         <div className="space-y-6">
-          {/* Title */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          {/* Title & Slug */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
               Taken Labarin *
             </label>
             <input
@@ -378,12 +382,11 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
               value={formData.title}
               onChange={handleTitleChange}
               placeholder="Rubuta taken labarin..."
-              className="w-full px-4 py-3 text-2xl font-bold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 text-xl sm:text-2xl font-bold border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
             
-            {/* Slug */}
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-widest">
                 Slug (URL)
               </label>
               <input
@@ -391,14 +394,14 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="labarin-slug"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           {/* Excerpt */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
               Taƙaitaccen Bayani *
             </label>
             <textarea
@@ -406,22 +409,22 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
               onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
               placeholder="Rubuta taƙaitaccen bayani game da labarin..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
 
           {/* Content Editor */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Abun Ciki *
               </label>
               <button
                 type="button"
                 onClick={() => setEditorMode(editorMode === 'rich' ? 'markdown' : 'rich')}
-                className="text-sm text-blue-600 hover:underline"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors"
               >
-                Switch to {editorMode === 'rich' ? 'Markdown' : 'Rich Text'} Editor
+                Koma {editorMode === 'rich' ? 'Markdown' : 'Rich Text'}
               </button>
             </div>
             {editorMode === 'rich' ? (
@@ -436,24 +439,24 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 placeholder="Fara rubuta labarin a nan... (Markdown supported)"
                 rows={15}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             )}
           </div>
 
-          {/* Metadata */}
+          {/* Metadata Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Category */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Kalma *
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+                Rukuni *
               </label>
               <select
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               >
-                <option value="">Zaɓi kalma...</option>
+                <option value="">Zaɓi rukuni...</option>
                 {categories.map((cat) => (
                   <option key={cat.$id} value={cat.$id}>
                     {cat.name}
@@ -463,19 +466,19 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
             </div>
 
             {/* Author */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
                 Marubucin *
               </label>
               {isAuthorMode ? (
-                <div className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-400">
+                <div className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400 font-medium">
                   {currentAuthorName || 'Ana ɗaukar...'}
                 </div>
               ) : (
                 <select
                   value={formData.authorId}
                   onChange={(e) => setFormData({ ...formData, authorId: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 >
                   <option value="">Zaɓi marubucin...</option>
                   {authors.map((author) => (
@@ -489,23 +492,23 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
           </div>
 
           {/* Tags Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Alamomi
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+              Alamomi (Tags)
             </label>
-            <div className="flex space-x-2 mb-3">
+            <div className="flex space-x-2 mb-4">
               <input
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                 placeholder="Rubuta alama..."
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
               <button
                 onClick={handleAddTag}
                 type="button"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                className="px-6 py-2 bg-gray-900 dark:bg-gray-700 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg"
               >
                 Ƙara
               </button>
@@ -514,14 +517,10 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
               {formData.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center space-x-1 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-bold border border-blue-100 dark:border-blue-800"
                 >
-                  <span>#{tag}</span>
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    type="button"
-                    className="hover:text-blue-900 dark:hover:text-blue-100"
-                  >
+                  #{tag}
+                  <button onClick={() => handleRemoveTag(tag)} className="hover:text-blue-900 dark:hover:text-white">
                     <FiX className="w-3 h-3" />
                   </button>
                 </span>
@@ -530,142 +529,110 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
           </div>
 
           {/* Cover Image */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Hoton Murfin
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm">
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
+              Hoton Murfin *
             </label>
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <label className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-center px-4 py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 transition-colors">
-                    <div className="text-center">
-                      <FiUpload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Danna don zaɓar hoto ko ja shi nan
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        PNG, JPG, WEBP har zuwa 10MB
-                      </p>
+              {!formData.coverImage ? (
+                <label className="cursor-pointer group block">
+                  <div className="flex flex-col items-center justify-center px-4 py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl group-hover:border-blue-500 dark:group-hover:border-blue-400 transition-all bg-gray-50 dark:bg-gray-900/50">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 mb-4 transition-transform group-hover:scale-110">
+                      <FiUpload className="w-6 h-6" />
                     </div>
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">Danna don zaɓar hoto</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, WEBP har zuwa 10MB</p>
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 </label>
-              </div>
-              {formData.coverImage && (
-                <div className="relative">
+              ) : (
+                <div className="relative group rounded-2xl overflow-hidden shadow-2xl">
                   <img
                     src={formData.coverImage}
                     alt="Preview"
-                    className="w-full max-h-96 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                    className="w-full max-h-[400px] object-cover"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, coverImage: '', coverImageFile: null })}
-                    className="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                  >
-                    <FiX className="w-4 h-4" />
-                  </button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                    <label className="p-3 bg-white text-gray-900 rounded-full cursor-pointer hover:scale-110 transition-transform shadow-xl">
+                      <FiUpload className="w-6 h-6" />
+                      <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    </label>
+                    <button
+                      onClick={() => setFormData({ ...formData, coverImage: '', coverImageFile: null })}
+                      className="p-3 bg-red-600 text-white rounded-full hover:scale-110 transition-transform shadow-xl"
+                    >
+                      <FiX className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Featured Article & Social Toggle */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.featured}
-                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-              />
+          {/* Settings Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 shadow-sm space-y-6">
+            <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-700">
+              <div className="pt-1">
+                <input
+                  type="checkbox"
+                  checked={formData.featured}
+                  onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
               <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Labari Mai Muhimmanci
-                </span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Nuna wannan labarin a babban shafi
-                </p>
+                <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">Labari Mai Muhimmanci</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nuna wannan labarin a babban shafi (Bento Grid)</p>
               </div>
             </label>
 
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={shareToSocial}
-                onChange={(e) => setShareToSocial(e.target.checked)}
-                className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-              />
+            <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-700">
+              <div className="pt-1">
+                <input
+                  type="checkbox"
+                  checked={shareToSocial}
+                  onChange={(e) => setShareToSocial(e.target.checked)}
+                  className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                />
+              </div>
               <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Raba a Social Media (Telegram & WhatsApp)
-                </span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Zai raba labarin kai tsaye idan ka buga shi
-                </p>
+                <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">Raba a Social Media</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Zai raba labarin kai tsaye a Telegram & WhatsApp idan ka buga shi</p>
               </div>
             </label>
           </div>
         </div>
       ) : (
         /* Preview Mode */
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8 shadow-2xl">
           <div className="max-w-3xl mx-auto">
-            {/* Category Badge */}
-            {formData.categoryId && categories.find(c => c.$id === formData.categoryId) && (
-              <div className="mb-4">
-                <span className="inline-block px-4 py-1.5 text-sm font-semibold text-white bg-blue-600 rounded-full">
-                  {categories.find(c => c.$id === formData.categoryId)?.name}
+            {formData.categoryId && (
+              <div className="mb-6">
+                <span className="inline-block px-4 py-1.5 text-[10px] font-black tracking-widest text-white bg-blue-600 rounded-full uppercase">
+                  {categories.find(c => c.$id === formData.categoryId)?.name || 'Labari'}
                 </span>
               </div>
             )}
 
-            {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white mb-6 leading-tight tracking-tighter">
               {formData.title || 'Taken Labarin'}
             </h1>
 
-            {/* Excerpt */}
             {formData.excerpt && (
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 font-medium leading-relaxed italic border-l-4 border-blue-500 pl-6">
                 {formData.excerpt}
               </p>
             )}
 
-            {/* Tags */}
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {formData.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Cover Image */}
             {formData.coverImage && (
-              <div className="mb-8">
-                <img
-                  src={formData.coverImage}
-                  alt={formData.title}
-                  className="w-full rounded-lg"
-                />
+              <div className="mb-10 rounded-2xl overflow-hidden shadow-2xl">
+                <img src={formData.coverImage} alt="" className="w-full h-auto" />
               </div>
             )}
 
-            {/* Content */}
             <div
-              className="prose prose-lg dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? (marked as any).parse(formData.content) : formData.content || '<p>Babu abun ciki...</p>' }}
+              className="article-content prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? (marked as any).parseSync(formData.content) : formData.content || '<p className="text-gray-400">Babu abun ciki tukunna...</p>' }}
             />
           </div>
         </div>

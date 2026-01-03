@@ -11,13 +11,48 @@ import {
   FiChevronRight,
   FiEye
 } from 'react-icons/fi';
-import { userService, commentService } from '../../lib/appwriteServices';
+import { userService } from '../../lib/appwriteServices';
 import type { User } from '../../types';
 
 interface UserWithStats extends User {
   commentsCount?: number;
   lastActivity?: string;
 }
+
+// Helper components for the list
+const RoleBadge = ({ role }: { role?: string }) => {
+  const styles = {
+    admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
+    author: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+    user: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+  };
+  const labels = { admin: 'Admin', author: 'Marubucin', user: 'Mai Amfani' };
+  
+  return (
+    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${styles[role as keyof typeof styles] || styles.user}`}>
+      {labels[role as keyof typeof labels] || 'Mai Amfani'}
+    </span>
+  );
+};
+
+const UserActions = ({ onView, onDelete }: { onView: () => void, onDelete: () => void }) => (
+  <div className="flex items-center gap-1">
+    <button
+      onClick={onView}
+      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+      title="Duba"
+    >
+      <FiEye className="w-4 h-4" />
+    </button>
+    <button
+      onClick={onDelete}
+      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+      title="Share"
+    >
+      <FiTrash2 className="w-4 h-4" />
+    </button>
+  </div>
+);
 
 export default function UsersManager() {
   const [users, setUsers] = useState<UserWithStats[]>([]);
@@ -168,31 +203,15 @@ export default function UsersManager() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Jimlar Masu Amfani</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {totalUsers}
-              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totalUsers}</p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
               <FiUser className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Masu Aiki Yau</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {users.filter(u => getTimeAgo(u.lastActivity) === 'Yau').length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <FiUser className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -210,28 +229,9 @@ export default function UsersManager() {
             </div>
           </div>
         </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Sabbin Masu Amfani</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {users.filter(u => {
-                  const created = new Date(u.$createdAt || '');
-                  const now = new Date();
-                  const diffInDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-                  return diffInDays <= 7;
-                }).length}
-              </p>
-            </div>
-            <div className="p-3 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-              <FiUser className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Table/List */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -240,119 +240,95 @@ export default function UsersManager() {
         ) : users.length === 0 ? (
           <div className="text-center py-12">
             <FiUser className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              Babu masu amfani
-            </h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Babu masu amfani</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {searchTerm ? 'Ba a sami wani mai amfani da ya dace da neman ka ba' : 'Har yanzu babu masu amfani a cikin tsarin'}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Mai Amfani
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Imel
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Matsayi
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Sharhi
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ranar Shiga
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Aiki Na Karshe
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ayyuka
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {users.map((user) => (
-                  <tr key={user.$id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {user.avatar ? (
-                          <img
-                            src={user.avatar}
-                            alt={user.name}
-                            className="h-10 w-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                            {user.name?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {user.name}
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mai Amfani</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Matsayi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sharhi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Aiki Na Karshe</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ayyuka</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {users.map((user) => (
+                    <tr key={user.$id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">{user.name?.charAt(0).toUpperCase()}</div>
+                          )}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <RoleBadge role={user.role} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-1.5">
+                          <FiMessageSquare className="h-4 w-4" />
+                          {user.commentsCount || 0}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        {getTimeAgo(user.lastActivity)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <UserActions onView={() => handleViewUser(user)} onDelete={() => handleDeleteUser(user.$id)} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {users.map((user) => (
+                <div key={user.$id} className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">{user.name?.charAt(0).toUpperCase()}</div>
+                      )}
+                      <div>
+                        <div className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{user.email}</div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <FiMail className="mr-2 h-4 w-4" />
-                        {user.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
-                          : user.role === 'author'
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-                      }`}>
-                        {user.role === 'admin' ? 'Admin' : user.role === 'author' ? 'Marubucin' : 'Mai Amfani'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center">
-                        <FiMessageSquare className="mr-2 h-4 w-4" />
+                    </div>
+                    <RoleBadge role={user.role} />
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <FiMessageSquare className="h-3 w-3" />
                         {user.commentsCount || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center">
-                        <FiCalendar className="mr-2 h-4 w-4" />
-                        {formatDate(user.$createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                      {getTimeAgo(user.lastActivity)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleViewUser(user)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="Duba"
-                        >
-                          <FiEye className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user.$id)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                          title="Share"
-                        >
-                          <FiTrash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      </span>
+                      <span>{getTimeAgo(user.lastActivity)}</span>
+                    </div>
+                    <UserActions onView={() => handleViewUser(user)} onDelete={() => handleDeleteUser(user.$id)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -366,14 +342,14 @@ export default function UsersManager() {
             <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
               <FiChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
               <FiChevronRight className="h-5 w-5" />
             </button>
@@ -383,99 +359,46 @@ export default function UsersManager() {
 
       {/* User Details Modal */}
       {showUserDetails && selectedUser && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" onClick={() => setShowUserDetails(false)}></div>
-
-            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
-                      Bayanan Mai Amfani
-                    </h3>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-4">
-                        {selectedUser.avatar ? (
-                          <img
-                            src={selectedUser.avatar}
-                            alt={selectedUser.name}
-                            className="h-20 w-20 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                            {selectedUser.name?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                            {selectedUser.name}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {selectedUser.email}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selectedUser.bio && (
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Bayani
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {selectedUser.bio}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Matsayi
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {selectedUser.role === 'admin' ? 'Admin' : selectedUser.role === 'author' ? 'Marubucin' : 'Mai Amfani'}
-                          </p>
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Sharhi
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {selectedUser.commentsCount || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Ranar Shiga
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {formatDate(selectedUser.$createdAt)}
-                          </p>
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Aiki Na Karshe
-                          </h5>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {getTimeAgo(selectedUser.lastActivity)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowUserDetails(false)}></div>
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Bayanan Mai Amfani</h3>
+              <div className="flex items-center gap-4 mb-8">
+                {selectedUser.avatar ? (
+                  <img src={selectedUser.avatar} alt="" className="h-20 w-20 rounded-full object-cover" />
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+                    {selectedUser.name?.charAt(0).toUpperCase()}
                   </div>
+                )}
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedUser.name}</h4>
+                  <p className="text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
                 </div>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  onClick={() => setShowUserDetails(false)}
-                  className="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-700 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  Rufe
-                </button>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Matsayi</p>
+                  <RoleBadge role={selectedUser.role} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Jimlar Sharhi</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{selectedUser.commentsCount || 0}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Ranar Shiga</p>
+                  <p className="text-gray-900 dark:text-white font-medium">{formatDate(selectedUser.$createdAt)}</p>
+                </div>
               </div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 flex justify-end">
+              <button
+                onClick={() => setShowUserDetails(false)}
+                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Rufe
+              </button>
             </div>
           </div>
         </div>

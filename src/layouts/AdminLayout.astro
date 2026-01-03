@@ -29,29 +29,19 @@ const { title } = Astro.props;
     <AdminSidebar client:load />
     
     <!-- Main Content Area -->
-    <div class="lg:pl-64 pt-14 lg:pt-0">
-      <!-- Top Header -->
-      <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
-        <div class="px-4 py-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white" style="font-family: 'Fira Code', monospace;">
-              {title}
-            </h1>
-            <div class="flex items-center space-x-4">
-              <a
-                href="/"
-                target="_blank"
-                class="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                Duba Shafin →
-              </a>
-            </div>
-          </div>
+    <div class="lg:pl-64">
+      <!-- Top Header (Hidden on LG, shown on Mobile) -->
+      <header class="lg:hidden bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 h-16 flex items-center px-4 sm:px-6">
+        <div class="flex items-center justify-between w-full">
+          <h1 class="text-xl font-bold text-gray-900 dark:text-white truncate pr-12">
+            {title}
+          </h1>
+          <!-- Mobile toggle button space is reserved via z-50 button in AdminSidebar -->
         </div>
       </header>
 
       <!-- Page Content -->
-      <main class="px-4 py-8 sm:px-6 lg:px-8">
+      <main class="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <slot />
       </main>
     </div>

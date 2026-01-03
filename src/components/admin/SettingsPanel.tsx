@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { settingsService } from '../../lib/appwriteServices';
 import { showSuccessToast, showErrorToast, showInfoToast } from '../../utils/toast';
-import { FiGlobe, FiUser, FiSearch, FiMail, FiShield, FiDatabase } from 'react-icons/fi';
+import { FiGlobe, FiUser, FiSearch, FiMail, FiShield, FiDatabase, FiLoader, FiCheck, FiSave } from 'react-icons/fi';
 
 interface SettingsSection {
   id: string;
@@ -40,7 +40,7 @@ export default function SettingsPanel() {
   const [saving, setSaving] = useState(false);
 
   const sections: SettingsSection[] = [
-    { id: 'site', name: 'Saitunan Gaba ɗaya', icon: FiGlobe },
+    { id: 'site', name: 'Gaba ɗaya', icon: FiGlobe },
     { id: 'seo', name: 'SEO', icon: FiSearch },
     { id: 'users', name: 'Masu Amfani', icon: FiUser },
     { id: 'email', name: 'Imel', icon: FiMail },
@@ -48,17 +48,15 @@ export default function SettingsPanel() {
     { id: 'database', name: 'Database', icon: FiDatabase },
   ];
 
-  // Site Settings
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     siteName: 'Technologiya',
     siteDescription: 'Labarun Fasaha da Kimiyya cikin Hausa',
-    siteUrl: 'https://technologiya.com',
+    siteUrl: 'https://technologiyaa.netlify.app',
     contactEmail: 'contact@technologiya.com',
     language: 'ha',
     timezone: 'Africa/Lagos',
   });
 
-  // SEO Settings
   const [seoSettings, setSeoSettings] = useState<SEOSettings>({
     metaTitle: 'Technologiya - Labarun Fasaha da Kimiyya cikin Hausa',
     metaDescription: 'Karanta sabbin labarai game da fasaha, kimiyya, da cigaba a cikin harshen Hausa.',
@@ -67,7 +65,6 @@ export default function SettingsPanel() {
     twitterHandle: '@technologiya',
   });
 
-  // User Settings
   const [userSettings, setUserSettings] = useState<UserSettings>({
     enableRegistration: true,
     requireEmailVerification: true,
@@ -75,7 +72,6 @@ export default function SettingsPanel() {
     moderateComments: true,
   });
 
-  // Load settings from Appwrite on mount
   useEffect(() => {
     loadSettings();
   }, []);
@@ -86,13 +82,11 @@ export default function SettingsPanel() {
       const result = await settingsService.getAllSettings();
       
       if (result.success && result.data) {
-        // Convert array of settings to object structure
         const settingsMap: { [key: string]: string } = {};
         result.data.forEach((setting: any) => {
           settingsMap[setting.settingKey] = setting.settingValue;
         });
 
-        // Parse site settings
         if (settingsMap['siteName']) {
           setSiteSettings({
             siteName: settingsMap['siteName'] || 'Technologiya',
@@ -104,7 +98,6 @@ export default function SettingsPanel() {
           });
         }
 
-        // Parse SEO settings
         if (settingsMap['metaTitle']) {
           setSeoSettings({
             metaTitle: settingsMap['metaTitle'] || '',
@@ -115,7 +108,6 @@ export default function SettingsPanel() {
           });
         }
 
-        // Parse user settings
         if (settingsMap['enableRegistration']) {
           setUserSettings({
             enableRegistration: settingsMap['enableRegistration'] === 'true',
@@ -124,12 +116,9 @@ export default function SettingsPanel() {
             moderateComments: settingsMap['moderateComments'] === 'true',
           });
         }
-
-        showInfoToast('Settings loaded');
       }
     } catch (error) {
       console.error('Error loading settings:', error);
-      showInfoToast('Using default settings');
     } finally {
       setLoading(false);
     }
@@ -138,25 +127,18 @@ export default function SettingsPanel() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
-      // Prepare all settings for batch update
       const allSettings = [
-        // Site settings
         { settingKey: 'siteName', settingValue: siteSettings.siteName, category: 'site' },
         { settingKey: 'siteDescription', settingValue: siteSettings.siteDescription, category: 'site' },
         { settingKey: 'siteUrl', settingValue: siteSettings.siteUrl, category: 'site' },
         { settingKey: 'contactEmail', settingValue: siteSettings.contactEmail, category: 'site' },
         { settingKey: 'language', settingValue: siteSettings.language, category: 'site' },
         { settingKey: 'timezone', settingValue: siteSettings.timezone, category: 'site' },
-        
-        // SEO settings
         { settingKey: 'metaTitle', settingValue: seoSettings.metaTitle, category: 'seo' },
         { settingKey: 'metaDescription', settingValue: seoSettings.metaDescription, category: 'seo' },
         { settingKey: 'metaKeywords', settingValue: seoSettings.metaKeywords, category: 'seo' },
         { settingKey: 'ogImage', settingValue: seoSettings.ogImage, category: 'seo' },
         { settingKey: 'twitterHandle', settingValue: seoSettings.twitterHandle, category: 'seo' },
-        
-        // User settings
         { settingKey: 'enableRegistration', settingValue: String(userSettings.enableRegistration), category: 'users' },
         { settingKey: 'requireEmailVerification', settingValue: String(userSettings.requireEmailVerification), category: 'users' },
         { settingKey: 'allowComments', settingValue: String(userSettings.allowComments), category: 'users' },
@@ -164,399 +146,148 @@ export default function SettingsPanel() {
       ];
 
       const result = await settingsService.batchUpdateSettings(allSettings);
-      
       if (result.success) {
-        showSuccessToast('Settings saved successfully!');
+        showSuccessToast('An ajiye saitunan!');
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       } else {
-        showErrorToast('Failed to save settings');
+        showErrorToast('An samu kuskure wajen ajiye saituna');
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
-      showErrorToast('Error saving settings');
+      showErrorToast('An samu kuskure');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: "'Fira Code', monospace" }}>
-          Saitunan
-        </h2>
-        <nav className="space-y-1">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  activeSection === section.id
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{section.name}</span>
-              </button>
-            );
-          })}
-        </nav>
+    <div className="flex flex-col lg:flex-row min-h-[600px] bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Sidebar / Tabs */}
+      <aside className="w-full lg:w-64 bg-gray-50 dark:bg-[#0f172a] border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700">
+        <div className="p-4 lg:p-6">
+          <h2 className="hidden lg:block text-lg font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-6 italic">Saituna</h2>
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible no-scrollbar gap-1">
+            {sections.map((section) => {
+              const Icon = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all shrink-0 lg:shrink ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                  <span className="whitespace-nowrap">{section.name}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <svg className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p className="text-gray-600 dark:text-gray-400">Loading settings...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-64">
+            <FiLoader className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+            <p className="text-gray-500 font-bold text-sm uppercase tracking-widest">Ana ɗauko bayanai...</p>
           </div>
         ) : (
-          <>
-        {/* Site Settings */}
-        {activeSection === 'site' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan Gaba ɗaya
-            </h1>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Sunan Shafin
-                </label>
-                <input
-                  type="text"
-                  value={siteSettings.siteName}
-                  onChange={(e) => setSiteSettings({ ...siteSettings, siteName: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Bayanin Shafin
-                </label>
-                <textarea
-                  value={siteSettings.siteDescription}
-                  onChange={(e) => setSiteSettings({ ...siteSettings, siteDescription: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  URL ɗin Shafin
-                </label>
-                <input
-                  type="url"
-                  value={siteSettings.siteUrl}
-                  onChange={(e) => setSiteSettings({ ...siteSettings, siteUrl: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Imel ɗin Tuntuɓa
-                </label>
-                <input
-                  type="email"
-                  value={siteSettings.contactEmail}
-                  onChange={(e) => setSiteSettings({ ...siteSettings, contactEmail: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Harshe
-                  </label>
-                  <select
-                    value={siteSettings.language}
-                    onChange={(e) => setSiteSettings({ ...siteSettings, language: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="ha">Hausa</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Yankin Lokaci
-                  </label>
-                  <select
-                    value={siteSettings.timezone}
-                    onChange={(e) => setSiteSettings({ ...siteSettings, timezone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
-                    <option value="Africa/Kano">Africa/Kano (WAT)</option>
-                    <option value="UTC">UTC</option>
-                  </select>
+          <div className="max-w-2xl mx-auto lg:mx-0">
+            {/* Site Settings */}
+            {activeSection === 'site' && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Gaba ɗaya</h1>
+                <div className="grid gap-6">
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Sunan Shafin</label>
+                    <input type="text" value={siteSettings.siteName} onChange={(e) => setSiteSettings({ ...siteSettings, siteName: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Bayanin Shafin</label>
+                    <textarea value={siteSettings.siteDescription} onChange={(e) => setSiteSettings({ ...siteSettings, siteDescription: e.target.value })} rows={3} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">URL ɗin Shafin</label>
+                    <input type="url" value={siteSettings.siteUrl} onChange={(e) => setSiteSettings({ ...siteSettings, siteUrl: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* SEO Settings */}
-        {activeSection === 'seo' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan SEO
-            </h1>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meta Title
-                </label>
-                <input
-                  type="text"
-                  value={seoSettings.metaTitle}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, metaTitle: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {seoSettings.metaTitle.length}/60 haruffa
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meta Description
-                </label>
-                <textarea
-                  value={seoSettings.metaDescription}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, metaDescription: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {seoSettings.metaDescription.length}/160 haruffa
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Meta Keywords
-                </label>
-                <input
-                  type="text"
-                  value={seoSettings.metaKeywords}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, metaKeywords: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Raba da koma (,)
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Open Graph Image
-                </label>
-                <input
-                  type="url"
-                  value={seoSettings.ogImage}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, ogImage: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Girman da aka ba da shawara: 1200x630px
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Twitter Handle
-                </label>
-                <input
-                  type="text"
-                  value={seoSettings.twitterHandle}
-                  onChange={(e) => setSeoSettings({ ...seoSettings, twitterHandle: e.target.value })}
-                  placeholder="@technologiya"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* User Settings */}
-        {activeSection === 'users' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan Masu Amfani
-            </h1>
-            
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Rijista Sabon Asusu
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Barin masu amfani su yi rajista
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={userSettings.enableRegistration}
-                    onChange={(e) => setUserSettings({ ...userSettings, enableRegistration: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Tabbatar da Imel
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Buƙaci tabbatar da imel kafin shiga
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={userSettings.requireEmailVerification}
-                    onChange={(e) => setUserSettings({ ...userSettings, requireEmailVerification: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Barin Sharhi
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Barin masu amfani su yi sharhi kan labarai
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={userSettings.allowComments}
-                    onChange={(e) => setUserSettings({ ...userSettings, allowComments: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Duba Sharhi
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Duba sharhi kafin a buga
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={userSettings.moderateComments}
-                    onChange={(e) => setUserSettings({ ...userSettings, moderateComments: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Email Settings */}
-        {activeSection === 'email' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan Imel
-            </h1>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-blue-800 dark:text-blue-300">
-                Saitunan imel za a haɗa su da Appwrite bayan an gama haɗawa.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Security Settings */}
-        {activeSection === 'security' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan Tsaro
-            </h1>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-blue-800 dark:text-blue-300">
-                Saitunan tsaro za a haɗa su da Appwrite bayan an gama haɗawa.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Database Settings */}
-        {activeSection === 'database' && (
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Saitunan Database
-            </h1>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <p className="text-blue-800 dark:text-blue-300">
-                Saitunan database za a haɗa su da Appwrite bayan an gama haɗawa.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Save Button */}
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center space-x-2"
-            >
-              {saving ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Ana Ajiyewa...</span>
-                </>
-              ) : (
-                <span>Ajiye Canje-canje</span>
-              )}
-            </button>
-            {saved && !saving && (
-              <span className="text-green-600 dark:text-green-400 text-sm font-medium">
-                ✓ An ajiye saitunan
-              </span>
             )}
+
+            {/* SEO Settings */}
+            {activeSection === 'seo' && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Search Engine Optimization</h1>
+                <div className="grid gap-6">
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Meta Title</label>
+                    <input type="text" value={seoSettings.metaTitle} onChange={(e) => setSeoSettings({ ...seoSettings, metaTitle: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Twitter Handle</label>
+                    <input type="text" value={seoSettings.twitterHandle} onChange={(e) => setSeoSettings({ ...seoSettings, twitterHandle: e.target.value })} placeholder="@technologiya" className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* User Settings */}
+            {activeSection === 'users' && (
+              <div className="space-y-6 animate-fade-in">
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Masu Amfani</h1>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Rijista Sabon Asusu', state: userSettings.enableRegistration, key: 'enableRegistration' },
+                    { label: 'Tabbatar da Imel', state: userSettings.requireEmailVerification, key: 'requireEmailVerification' },
+                    { label: 'Barin Sharhi', state: userSettings.allowComments, key: 'allowComments' },
+                    { label: 'Duba Sharhi Kafin Buga Shi', state: userSettings.moderateComments, key: 'moderateComments' }
+                  ].map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.label}</span>
+                      <button 
+                        onClick={() => setUserSettings({ ...userSettings, [item.key]: !item.state })}
+                        className={`w-12 h-6 rounded-full transition-all relative ${item.state ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${item.state ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Other categories placeholder */}
+            {['email', 'security', 'database'].includes(activeSection) && (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 mb-4 text-2xl"><FiDatabase /></div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Ana Kan Aiki</h3>
+                <p className="text-sm text-gray-500">Wannan sashin zai fara aiki ba da jimawa ba.</p>
+              </div>
+            )}
+
+            {/* Save Button */}
+            <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center gap-4">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full sm:w-auto px-10 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-3 uppercase tracking-widest text-xs italic active:scale-95"
+              >
+                {saving ? <FiLoader className="animate-spin" /> : <FiSave />}
+                <span>{saving ? 'Ana Ajiyewa...' : 'Ajiye Canje-canje'}</span>
+              </button>
+              {saved && (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-bold text-sm animate-fade-in">
+                  <FiCheck className="w-5 h-5" />
+                  <span>An ajiye!</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-          </>
         )}
       </main>
     </div>

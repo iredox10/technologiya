@@ -22,40 +22,33 @@ export default function AuthorSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [currentAuthor, setCurrentAuthor] = useState({
-    name: 'Musa Ibrahim',
-    email: 'musa@technologiya.com',
-    avatar: 'https://ui-avatars.com/api/?name=Musa+Ibrahim&background=3B82F6&color=fff',
-    articlesCount: 25,
+    name: '',
+    email: '',
+    avatar: '',
+    articlesCount: 0,
   });
 
-  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const userResult = await authService.getCurrentUser();
-        
         if (!userResult.success || !userResult.data) {
           window.location.href = '/login';
           return;
         }
 
-        // Check if user is an author/admin
         const authorResult = await authorService.getAuthorByUserId(userResult.data.$id);
-        
         if (!authorResult.success || !authorResult.data) {
           window.location.href = '/login';
           return;
         }
 
         const author = authorResult.data;
-        
-        // Check if active and has proper role
         if (author.status !== 'active' || (author.role !== 'author' && author.role !== 'admin')) {
           window.location.href = '/login';
           return;
         }
 
-        // Update author data
         setCurrentAuthor({
           name: author.name,
           email: author.email,
@@ -85,125 +78,79 @@ export default function AuthorSidebar() {
       await authService.logout();
       window.location.href = '/login';
     } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect even if logout fails
       window.location.href = '/login';
     }
   };
 
-  // Show loading while checking auth
   if (isChecking) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-        >
-          {isMobileMenuOpen ? (
-            <FiX className="w-6 h-6" />
-          ) : (
-            <FiMenu className="w-6 h-6" />
-          )}
-        </button>
-      </div>
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 right-4 z-[60] p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 shadow-sm active:scale-90"
+      >
+        {isMobileMenuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
+      </button>
 
-      {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700
-          transform transition-transform duration-200 ease-in-out
-          lg:translate-x-0
+          fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-[#030712] border-r border-gray-200 dark:border-gray-800
+          transform transition-transform duration-300 ease-in-out lg:translate-x-0
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-700 px-6">
-          <a href="/author" className="flex items-center space-x-2">
-            <FiEdit className="w-6 h-6 text-green-600 dark:text-green-400" />
-            <span className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: "'Fira Code', monospace" }}>
-              Marubucin
-            </span>
+        <div className="h-20 flex items-center px-6 border-b border-gray-100 dark:border-gray-800/50">
+          <a href="/author" className="flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-white font-bold">M</div>
+            <span className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tight">Marubucin</span>
           </a>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = typeof window !== 'undefined' && window.location.pathname === item.href;
-            
             return (
               <a
                 key={item.name}
                 href={item.href}
-                className={`
-                  flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
-                  ${isActive
-                    ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }
-                `}
+                className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                  isActive ? 'bg-green-600 text-white shadow-lg' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />
                   <span>{item.name}</span>
                 </div>
-                {item.badge && (
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-600 text-white">
-                    {item.badge}
-                  </span>
-                )}
+                {item.badge && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-white/20">{item.badge}</span>}
               </a>
             );
           })}
         </nav>
 
-        {/* Author Profile Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center space-x-3 mb-3">
-            <img 
-              src={currentAuthor.avatar} 
-              alt={currentAuthor.name}
-              className="w-10 h-10 rounded-full"
-            />
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800/50">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 mb-3">
+            <img src={currentAuthor.avatar} alt="" className="w-9 h-9 rounded-lg object-cover" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {currentAuthor.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {currentAuthor.email}
-              </p>
+              <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{currentAuthor.name}</p>
+              <p className="text-[10px] text-gray-500 truncate">{currentAuthor.email}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-          >
-            <FiLogOut className="w-4 h-4" />
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all">
+            <FiLogOut />
             <span>Fita</span>
           </button>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-gray-900/50 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      {isMobileMenuOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
     </>
   );
 }

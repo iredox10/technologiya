@@ -5,6 +5,41 @@ import { articleService } from '../../lib/appwriteServices';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import type { Article } from '../../types';
 
+// Helper components for the list
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles = {
+    published: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+    draft: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+    archived: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+  };
+  const labels = { published: 'An Buga', draft: 'Daftari', archived: 'Adanawa' };
+  
+  return (
+    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${styles[status as keyof typeof styles] || styles.archived}`}>
+      {labels[status as keyof typeof labels] || status}
+    </span>
+  );
+};
+
+const ActionButtons = ({ articleId, onDelete }: { articleId: string, onDelete: () => void }) => (
+  <div className="flex items-center gap-1">
+    <a
+      href={`/admin/articles/edit/${articleId}`}
+      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+      title="Gyara"
+    >
+      <FiEdit className="w-4 h-4" />
+    </a>
+    <button
+      onClick={onDelete}
+      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+      title="Share"
+    >
+      <FiTrash2 className="w-4 h-4" />
+    </button>
+  </div>
+);
+
 export default function ArticlesList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
@@ -209,99 +244,82 @@ export default function ArticlesList() {
         </div>
       ) : (
         <>
-          {/* Articles Table */}
+          {/* Articles Table/List */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Taken
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Kalma
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Marubucin
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Yanayi
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Kallonin
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Kwanan Wata
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Ayyuka
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Taken</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kalma</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yanayi</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kallon</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kwanan Wata</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ayyuka</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {articles.map((article) => (
                     <tr key={article.$id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
-                          {article.title}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{article.title}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {article.categoryId || 'N/A'}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{article.categoryId || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {article.authorId || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            article.status === 'published'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                              : article.status === 'draft'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-                          }`}
-                        >
-                          {article.status === 'published' ? 'An Buga' : article.status === 'draft' ? 'Daftari' : 'Adanawa'}
-                        </span>
+                        <StatusBadge status={article.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
                           <FiEye className="w-4 h-4" />
-                          <span className="font-mono">{article.views?.toLocaleString() || 0}</span>
+                          <span>{article.views?.toLocaleString() || 0}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {formatDate(article.publishedAt || article.$createdAt)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
-                          <a
-                            href={`/admin/articles/edit/${article.$id}`}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                            title="Gyara"
-                          >
-                            <FiEdit className="w-4 h-4" />
-                          </a>
-                          <button
-                            onClick={() => handleDelete(article.$id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            title="Share"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          <ActionButtons articleId={article.$id} onDelete={() => handleDelete(article.$id)} />
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {articles.map((article) => (
+                <div key={article.$id} className="p-4 space-y-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 leading-snug">
+                      {article.title}
+                    </h3>
+                    <StatusBadge status={article.status} />
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-3">
+                      <span>{article.categoryId || 'General'}</span>
+                      <span className="flex items-center gap-1">
+                        <FiEye className="w-3 h-3" />
+                        {article.views || 0}
+                      </span>
+                    </div>
+                    <span>{formatDate(article.publishedAt || article.$createdAt)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <ActionButtons articleId={article.$id} onDelete={() => handleDelete(article.$id)} />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Empty State */}
