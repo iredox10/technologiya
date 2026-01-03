@@ -8,8 +8,8 @@ import { FiArrowRight, FiSmartphone, FiMonitor, FiCpu, FiWifi, FiLayers, FiArrow
 export const prerender = false;
 
 // Data Fetching
-const articlesResult = await articleService.getArticles(1, 100);
-const allArticles = articlesResult.success && articlesResult.data 
+const articlesResult = await articleService.getArticles(1, 100).catch(err => ({ success: false, error: err.message }));
+const allArticles = articlesResult?.success && articlesResult?.data 
   ? (articlesResult.data.documents as any[])
   : [];
 
@@ -189,7 +189,7 @@ const getCategoryColor = (slug: string) => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {latestArticles.map((article) => (
+          {latestArticles.map((article: any) => (
             <ArticleCard article={article} client:visible />
           ))}
         </div>
