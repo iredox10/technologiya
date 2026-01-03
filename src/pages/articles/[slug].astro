@@ -83,9 +83,9 @@ const shareExcerpt = article.excerpt;
 const shareImage = article.coverImage || '';
 const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
 
-const fullShareText = `${shareUrl}\n\n_${footerText}_`;
+const fullShareText = `${shareUrl}`;
 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
-const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(`_${footerText}_`)}`;
+const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('\u200B')}`;
 
 const absoluteImageUrl = shareImage.startsWith('http') ? shareImage : `${baseUrl}${shareImage}`;
 ---

@@ -18,22 +18,16 @@ export async function shareToTelegram(params: ShareParams) {
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
   const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
-  // Format message using Markdown
-  const message = `${articleUrl}\n\n_${footerText}_`;
+  // Use Zero-Width Space trick to make link "invisible" but trigger preview
+  const message = `<a href="${articleUrl}">&#8203;</a>`;
 
   try {
-    const url = `https://api.telegram.org/bot${token}/${params.image ? 'sendPhoto' : 'sendMessage'}`;
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
     const body: any = {
       chat_id: chatId,
-      parse_mode: 'Markdown',
+      text: message,
+      parse_mode: 'HTML',
     };
-
-    if (params.image) {
-      body.photo = params.image;
-      body.caption = message;
-    } else {
-      body.text = message;
-    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -64,7 +58,7 @@ export async function shareToWhatsApp(params: ShareParams) {
   
   // Note: WhatsApp formatting varies by provider. 
   // This is a generic implementation.
-  const message = `${articleUrl}\n\n_${footerText}_`;
+  const message = `${articleUrl}`;
 
   try {
     const response = await fetch(apiUrl, {
