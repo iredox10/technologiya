@@ -6,7 +6,7 @@ import netlify from '@astrojs/netlify';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://technologiya.netlify.app',
+  site: 'https://technologiyaa.netlify.app',
   integrations: [react()],
   output: 'server',
   adapter: netlify(),

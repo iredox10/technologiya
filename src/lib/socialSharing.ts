@@ -14,7 +14,7 @@ export async function shareToTelegram(params: ShareParams) {
     return { success: false, error: 'Telegram not configured' };
   }
 
-  const baseUrl = import.meta.env.SITE_URL || 'https://technologiya.netlify.app';
+  const baseUrl = import.meta.env.SITE_URL || 'https://technologiyaa.netlify.app';
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
   const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
@@ -58,7 +58,7 @@ export async function shareToWhatsApp(params: ShareParams) {
     return { success: false, error: 'WhatsApp not configured' };
   }
 
-  const baseUrl = import.meta.env.SITE_URL || 'https://technologiya.netlify.app';
+  const baseUrl = import.meta.env.SITE_URL || 'https://technologiyaa.netlify.app';
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
   const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
