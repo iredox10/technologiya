@@ -14,9 +14,8 @@ export async function shareToTelegram(params: ShareParams) {
     return { success: false, error: 'Telegram not configured' };
   }
 
-  const baseUrl = import.meta.env.SITE_URL || 'https://technologiyaa.netlify.app';
+  const baseUrl = (import.meta.env.SITE_URL?.replace(/\/$/, '') || 'https://technologiyaa.netlify.app');
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
-  const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
   // Use Zero-Width Space trick to make link "invisible" but trigger preview
   const message = `<a href="${articleUrl}">&#8203;</a>`;
@@ -52,12 +51,10 @@ export async function shareToWhatsApp(params: ShareParams) {
     return { success: false, error: 'WhatsApp not configured' };
   }
 
-  const baseUrl = import.meta.env.SITE_URL || 'https://technologiyaa.netlify.app';
+  const baseUrl = (import.meta.env.SITE_URL?.replace(/\/$/, '') || 'https://technologiyaa.netlify.app');
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
-  const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
   
   // Note: WhatsApp formatting varies by provider. 
-  // This is a generic implementation.
   const message = `${articleUrl}`;
 
   try {

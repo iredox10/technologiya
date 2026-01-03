@@ -76,16 +76,16 @@ if (relatedArticlesResult.success && relatedArticlesResult.data) {
   );
 }
 
-const baseUrl = Astro.site || 'https://technologiyaa.netlify.app';
+const baseUrl = (Astro.site?.toString().replace(/\/$/, '') || 'https://technologiyaa.netlify.app');
 const shareUrl = `${baseUrl}/articles/${article.slug}`;
 const shareTitle = article.title;
 const shareExcerpt = article.excerpt;
 const shareImage = article.coverImage || '';
-const footerText = "Daga Technologiya - Labaran Fasaha a Hausa";
 
-const fullShareText = `${shareUrl}`;
-const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
+// Use zero-width space trick for Telegram to hide link text but keep card
 const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('\u200B')}`;
+// WhatsApp needs the URL to be visible to generate a preview reliably
+const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
 
 const absoluteImageUrl = shareImage.startsWith('http') ? shareImage : `${baseUrl}${shareImage}`;
 ---
