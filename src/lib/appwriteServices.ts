@@ -355,6 +355,24 @@ export class ArticleService {
   }
 }
 
+// Simple in-memory cache
+const memoryCache: Record<string, { data: any, timestamp: number }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Helper to get from cache
+function getFromCache(key: string) {
+  const cached = memoryCache[key];
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+}
+
+// Helper to set cache
+function setCache(key: string, data: any) {
+  memoryCache[key] = { data, timestamp: Date.now() };
+}
+
 // ============================================
 // CATEGORY SERVICE
 // ============================================
@@ -369,12 +387,17 @@ export class CategoryService {
       return { success: true, data: { documents: [], total: 0 } };
     }
 
+    const cacheKey = 'all_categories';
+    const cached = getFromCache(cacheKey);
+    if (cached) return { success: true, data: cached };
+
     try {
       const response = await databases.listDocuments(
         this.databaseId,
         this.collectionId,
         [Query.orderAsc('name')]
       );
+      setCache(cacheKey, response);
       return { success: true, data: response };
     } catch (error: any) {
       console.error('Get categories error:', error);
@@ -383,18 +406,24 @@ export class CategoryService {
   }
 
   async getCategory(categoryId: string) {
+    const cacheKey = `category_${categoryId}`;
+    const cached = getFromCache(cacheKey);
+    if (cached) return { success: true, data: cached };
+
     try {
       const category = await databases.getDocument(
         this.databaseId,
         this.collectionId,
         categoryId
       );
+      setCache(cacheKey, category);
       return { success: true, data: category };
     } catch (error: any) {
       console.error('Get category error:', error);
       return { success: false, error: error.message };
     }
   }
+
 
   async getCategoryBySlug(slug: string) {
     try {
@@ -469,12 +498,17 @@ export class AuthorService {
   private databaseId = APPWRITE_CONFIG.databaseId;
 
   async getAuthors() {
+    const cacheKey = 'all_authors';
+    const cached = getFromCache(cacheKey);
+    if (cached) return { success: true, data: cached };
+
     try {
       const response = await databases.listDocuments(
         this.databaseId,
         this.collectionId,
         [Query.orderAsc('name')]
       );
+      setCache(cacheKey, response);
       return { success: true, data: response };
     } catch (error: any) {
       console.error('Get authors error:', error);
@@ -483,12 +517,17 @@ export class AuthorService {
   }
 
   async getAuthor(authorId: string) {
+    const cacheKey = `author_${authorId}`;
+    const cached = getFromCache(cacheKey);
+    if (cached) return { success: true, data: cached };
+
     try {
       const author = await databases.getDocument(
         this.databaseId,
         this.collectionId,
         authorId
       );
+      setCache(cacheKey, author);
       return { success: true, data: author };
     } catch (error: any) {
       console.error('Get author error:', error);

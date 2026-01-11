@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { FiSave, FiEye, FiUpload, FiX } from 'react-icons/fi';
+import { FiSave, FiEye, FiUpload, FiX, FiClock, FiCalendar } from 'react-icons/fi';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import { articleService, categoryService, authorService, storageService, authService } from '../../lib/appwriteServices';
 import type { Article, Category, Author } from '../../types';
 import RichTextEditor from './RichTextEditor';
 import { marked } from 'marked';
-import hljs from 'highlight.js';
+import { formatHausaDate, getReadingTime } from '../../utils/hausa';
 
 interface ArticleFormData {
   title: string;
@@ -603,38 +603,136 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
           </div>
         </div>
       ) : (
-        /* Preview Mode */
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-8 shadow-2xl">
-          <div className="max-w-3xl mx-auto">
-            {formData.categoryId && (
-              <div className="mb-6">
-                <span className="inline-block px-4 py-1.5 text-[10px] font-black tracking-widest text-white bg-blue-600 rounded-full uppercase">
-                  {categories.find(c => c.$id === formData.categoryId)?.name || 'Labari'}
-                </span>
+        /* Preview Mode - Matches [slug].astro structure */
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-2xl">
+          <article className="min-h-screen bg-white dark:bg-[#030712]">
+            
+            {/* Hero Header */}
+            <header className="relative w-full min-h-[50vh] sm:min-h-[60vh] flex items-end overflow-hidden">
+              {/* Background Image */}
+              <div className="absolute inset-0 z-0 bg-gray-900">
+                {formData.coverImage ? (
+                  <img 
+                    src={formData.coverImage} 
+                    alt={formData.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-600">
+                    <span className="text-sm">Babu Hoton Murfi</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/60 to-transparent opacity-90"></div>
               </div>
-            )}
 
-            <h1 className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white mb-6 leading-tight tracking-tighter">
-              {formData.title || 'Taken Labarin'}
-            </h1>
+              <div className="w-full px-4 sm:px-8 pb-12 sm:pb-16 pt-24 relative z-10">
+                {/* Category & Date */}
+                <div className="flex items-center gap-4 mb-6 animate-fade-in-up">
+                  {formData.categoryId && (
+                    <span className="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold uppercase tracking-wider">
+                      {categories.find(c => c.$id === formData.categoryId)?.name || 'Rukuni'}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-2 text-gray-300 text-xs font-mono font-bold uppercase tracking-wider">
+                    <FiCalendar className="w-3 h-3" />
+                    {formatHausaDate(new Date(), 'full')}
+                  </span>
+                </div>
 
-            {formData.excerpt && (
-              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-8 font-medium leading-relaxed italic border-l-4 border-blue-500 pl-6">
-                {formData.excerpt}
-              </p>
-            )}
+                {/* Title */}
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight font-display drop-shadow-lg animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                  {formData.title || 'Taken Labarin'}
+                </h1>
 
-            {formData.coverImage && (
-              <div className="mb-10 rounded-2xl overflow-hidden shadow-2xl">
-                <img src={formData.coverImage} alt="" className="w-full h-auto" />
+                {/* Author & Meta */}
+                <div className="flex flex-wrap items-center gap-6 sm:gap-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const author = authors.find(a => a.$id === formData.authorId);
+                      return (
+                        <>
+                          <img 
+                            src={author?.avatar || `https://ui-avatars.com/api/?name=${author?.name || 'Author'}`} 
+                            alt={author?.name || 'Author'}
+                            className="w-12 h-12 rounded-full border-2 border-white/20"
+                          />
+                          <div>
+                            <p className="text-white font-bold text-sm">{author?.name || 'Sunan Marubuci'}</p>
+                            <p className="text-gray-400 text-xs">Marubuci</p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex items-center gap-6 text-sm text-gray-300 font-mono">
+                    <span className="flex items-center gap-2" title="Lokacin Karatu">
+                      <FiClock className="w-4 h-4 text-blue-400" />
+                      {getReadingTime(formData.content || '')}
+                    </span>
+                    <span className="flex items-center gap-2" title="Kallon">
+                      <FiEye className="w-4 h-4 text-purple-400" />
+                      <span>0</span>
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
+            </header>
 
-            <div
-              className="article-content prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? (marked as any).parseSync(formData.content) : formData.content || '<p className="text-gray-400">Babu abun ciki tukunna...</p>' }}
-            />
-          </div>
+            {/* Main Content Area */}
+            <div className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
+              <div className="bg-white dark:bg-gray-900 rounded-t-3xl p-6 sm:p-12 shadow-2xl border-t border-gray-100 dark:border-gray-800">
+                
+                {/* Article Body */}
+                <div 
+                  className="article-content prose prose-lg dark:prose-invert max-w-none font-serif text-gray-800 dark:text-gray-200 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: editorMode === 'markdown' ? marked.parse(formData.content) as string : formData.content || '<p className="text-gray-400">Babu abun ciki tukunna...</p>' }}
+                />
+
+                {/* Tags */}
+                {formData.tags.length > 0 && (
+                  <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex flex-wrap gap-2">
+                      {formData.tags.map((tag) => (
+                        <span key={tag} className="px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Author Bio Box */}
+                {formData.authorId && (
+                   (() => {
+                      const author = authors.find(a => a.$id === formData.authorId);
+                      if (author?.bio) {
+                        return (
+                          <div className="mt-16 p-8 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+                            <img 
+                              src={author.avatar || `https://ui-avatars.com/api/?name=${author.name}`} 
+                              alt={author.name}
+                              className="w-20 h-20 rounded-full ring-4 ring-white dark:ring-gray-700 shadow-md"
+                            />
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                Game da {author.name}
+                              </h3>
+                              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                                {author.bio}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                   })()
+                )}
+
+              </div>
+            </div>
+
+          </article>
         </div>
       )}
     </div>

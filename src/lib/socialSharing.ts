@@ -14,6 +14,19 @@ export async function shareToTelegram(params: ShareParams) {
     return { success: false, error: 'Telegram not configured' };
   }
 
+  // Clean up Chat ID if the user pasted a full URL
+  let formattedChatId = chatId;
+  if (chatId.includes('t.me/')) {
+    const parts = chatId.split('/');
+    const username = parts[parts.length - 1];
+    // If it's not a numeric ID (private group) and doesn't have @, add it
+    if (!username.startsWith('@') && !username.startsWith('-') && !/^\d+$/.test(username)) {
+      formattedChatId = `@${username}`;
+    } else {
+      formattedChatId = username;
+    }
+  }
+
   const baseUrl = (import.meta.env.SITE_URL?.replace(/\/$/, '') || 'https://technologiyaa.netlify.app');
   const articleUrl = `${baseUrl}/articles/${params.slug}`;
   
@@ -23,7 +36,7 @@ export async function shareToTelegram(params: ShareParams) {
   try {
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
     const body: any = {
-      chat_id: chatId,
+      chat_id: formattedChatId,
       text: message,
       parse_mode: 'HTML',
     };

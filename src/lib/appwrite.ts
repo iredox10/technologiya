@@ -1,25 +1,43 @@
 import { Client, Account, Databases, Storage, Query, ID } from 'appwrite';
 
+// Helper function to safely get environment variables in both Vite and Node environments
+const getEnv = (key: string, defaultValue: string = ''): string => {
+  // Check import.meta.env (Vite/Astro)
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  
+  // Check process.env (Node/Bun)
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  
+  return defaultValue;
+};
+
 // Appwrite Configuration
+const endpoint = getEnv('PUBLIC_APPWRITE_ENDPOINT', 'https://cloud.appwrite.io/v1');
+console.log('[Appwrite Config] Endpoint:', endpoint);
+
 export const APPWRITE_CONFIG = {
-  endpoint: import.meta.env.PUBLIC_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1',
-  projectId: import.meta.env.PUBLIC_APPWRITE_PROJECT_ID || '',
-  databaseId: import.meta.env.PUBLIC_APPWRITE_DATABASE_ID || '',
+  endpoint,
+  projectId: getEnv('PUBLIC_APPWRITE_PROJECT_ID'),
+  databaseId: getEnv('PUBLIC_APPWRITE_DATABASE_ID'),
   
   // Collection IDs
   collections: {
-    articles: import.meta.env.PUBLIC_APPWRITE_COLLECTION_ARTICLES || '',
-    categories: import.meta.env.PUBLIC_APPWRITE_COLLECTION_CATEGORIES || '',
-    authors: import.meta.env.PUBLIC_APPWRITE_COLLECTION_AUTHORS || '',
-    comments: import.meta.env.PUBLIC_APPWRITE_COLLECTION_COMMENTS || '',
-    users: import.meta.env.PUBLIC_APPWRITE_COLLECTION_USERS || '',
-    settings: import.meta.env.PUBLIC_APPWRITE_COLLECTION_SETTINGS || '',
+    articles: getEnv('PUBLIC_APPWRITE_COLLECTION_ARTICLES'),
+    categories: getEnv('PUBLIC_APPWRITE_COLLECTION_CATEGORIES'),
+    authors: getEnv('PUBLIC_APPWRITE_COLLECTION_AUTHORS'),
+    comments: getEnv('PUBLIC_APPWRITE_COLLECTION_COMMENTS'),
+    users: getEnv('PUBLIC_APPWRITE_COLLECTION_USERS'),
+    settings: getEnv('PUBLIC_APPWRITE_COLLECTION_SETTINGS'),
   },
   
   // Storage Bucket IDs
   buckets: {
-    articleImages: import.meta.env.PUBLIC_APPWRITE_BUCKET_ARTICLE_IMAGES || '',
-    authorAvatars: import.meta.env.PUBLIC_APPWRITE_BUCKET_AUTHOR_AVATARS || '',
+    articleImages: getEnv('PUBLIC_APPWRITE_BUCKET_ARTICLE_IMAGES'),
+    authorAvatars: getEnv('PUBLIC_APPWRITE_BUCKET_AUTHOR_AVATARS'),
   },
 };
 

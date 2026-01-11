@@ -9,13 +9,25 @@ Welcome to the Technologiya project. This is a modern tech news platform built s
 - **Backend/Auth:** [Appwrite](https://appwrite.io/)
 - **State/Data:** Appwrite SDK + Custom Services
 - **Content:** Markdown with Highlight.js for code blocks
+- **Language:** TypeScript (Strict)
 
-## 🛠 Commands
+## 🛠 Commands & Testing
+
+### Build & Run
 - **Development:** `bun run dev`
 - **Production Build:** `bun run build`
 - **Preview Build:** `bun run preview`
-- **Run Utility Scripts:** `bun x tsx <path-to-script>.ts` (e.g., `bun x tsx test-articles.ts`)
 - **Astro CLI:** `bun run astro <command>`
+
+### Testing (Single Test / Verification)
+Since this project relies on Appwrite connectivity, we use standalone TypeScript scripts for verification instead of a traditional test runner (Jest/Vitest).
+- **Run a Script:** `bun x tsx <path-to-script>.ts`
+- **Existing Examples:**
+  - `check-article.ts`: Verifies article fetching and structure.
+  - `test-articles.ts`: Connectivity test for article service.
+  - `check-slugs.ts`: Validates URL slug generation.
+
+**⚠️ AGENT RULE:** When implementing a complex feature or fixing a backend bug, you **MUST** create a temporary `verification-<feature>.ts` script to validate your changes before marking the task as complete. Delete it afterwards or convert it to a permanent tool if reusable.
 
 ## 📁 Project Structure
 - `src/components/`: Shared React components. Use PascalCase.
@@ -79,16 +91,12 @@ Welcome to the Technologiya project. This is a modern tech news platform built s
 - **Language:** The primary language of the UI and content is **Hausa**.
 - **Dates:** Use `dayjs` or native `toLocaleDateString('ha-NG')`.
 - **UI Strings:** All hardcoded labels must be in Hausa.
-  - Examples:
-    - "Karanta Labarin" (Read Article)
-    - "Bincika" (Search)
-    - "Shiga" (Login)
-    - "Gida" (Home)
-    - "Duba Duka" (View All)
+  - Examples: "Karanta Labarin" (Read Article), "Bincika" (Search), "Shiga" (Login).
 - **Placeholders:** Ensure input placeholders are also in Hausa.
 
 ### 8. Appwrite Integration
 - **Services:** Centralize database logic in `src/lib/appwriteServices.ts`.
+- **Instances:** Use the exported instances (e.g., `articleService`, `authService`) rather than instantiating classes yourself.
 - **Environment:** Use `import.meta.env.PUBLIC_APPWRITE_*` for configuration.
 - **Queries:** Use the `Query` utility from `appwrite` for filtering and sorting.
 - **Document Pattern:** Enriched documents (with author/category) should be handled in the fetching layer or frontmatter.
@@ -98,6 +106,14 @@ Welcome to the Technologiya project. This is a modern tech news platform built s
 - **Syntax Highlighting:** Supported via `highlight.js`. Always specify the language in code blocks (e.g., ` ```javascript `).
 - **Code Blocks:** Displayed with a "Kwafi" (Copy) button and language label.
 - **Images:** Use descriptive alt text in Hausa.
+
+## 🤖 AI Behavior Rules (Cursor/Copilot Substitute)
+
+1.  **No Hallucinations:** Do not import from non-existent libraries or files. Always check `package.json` and file existence first.
+2.  **Context Awareness:** Read `src/lib/appwriteServices.ts` before writing any data fetching logic.
+3.  **Visual Consistency:** When creating new UI, check `src/components` for existing patterns (cards, buttons, grids) to reuse.
+4.  **Tailwind 4:** Use utility-first styling. If using `@theme` features, ensure they are defined in the CSS.
+5.  **Verification:** Always create a small script to verify backend interactions before finalizing code.
 
 ## 🧪 Testing & Validation
 - **Connectivity:** Use standalone scripts (e.g., `test-articles.ts`) to verify backend connectivity: `bun x tsx test-articles.ts`.

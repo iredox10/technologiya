@@ -178,7 +178,7 @@ function quickTest() {
 }
 
 // Export test functions for console use
-window.autoLogoutTests = {
+(window as any).autoLogoutTests = {
   runAll: runAllTests,
   quick: quickTest,
   test1: test1_IsTrackingActive,

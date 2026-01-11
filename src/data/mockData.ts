@@ -1,7 +1,16 @@
 import type { Article, Author } from '../types';
 
 const mockAuthor: Author = {
-  id: '1',
+  $id: '1',
+  $createdAt: new Date().toISOString(),
+  $updatedAt: new Date().toISOString(),
+  $permissions: [],
+  $collectionId: 'mock_collection',
+  $databaseId: 'mock_database',
+  userId: 'user1',
+  email: 'musa@example.com',
+  role: 'author',
+  status: 'active',
   name: 'Musa Ibrahim',
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Musa',
   bio: 'Marubucin labarai na fasaha'
@@ -9,7 +18,12 @@ const mockAuthor: Author = {
 
 export const mockArticles: Article[] = [
   {
-    id: '1',
+    $id: '1',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'Samsung Galaxy S24 Ultra: Bita Cikakke',
     slug: 'samsung-galaxy-s24-ultra-bita',
     excerpt: 'Wannan shine mafi kyawun wayar Samsung da aka taba samarwa. Mu duba abin da yake da shi.',
@@ -69,19 +83,32 @@ export const mockArticles: Article[] = [
 
 <p>Idan kana neman wayar premium da za ta ɗauke ka shekaru da yawa, Galaxy S24 Ultra ita ce zaɓi mafi kyau.</p>`,
     coverImage: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=800&h=600&fit=crop',
+    categoryId: '1',
     category: {
-      id: '1',
+      $id: '1',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Wayoyi',
       slug: 'wayoyi'
     },
     tags: ['Samsung', 'Android', 'Bita'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-15T10:00:00Z',
     featured: true,
-    views: 1250
+    views: 1250,
+    status: 'published'
   },
   {
-    id: '2',
+    $id: '2',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'Yadda Ake Kare Bayanan Sirri A Yanar Gizo',
     slug: 'yadda-ake-kare-bayanan-sirri',
     excerpt: 'Koyi yadda za ka kare bayanan sirri da kuma tsaron ka a yanar gizo ta hanyoyi masu sauki.',
@@ -183,19 +210,32 @@ export const mockArticles: Article[] = [
 
 <p>Ka tuna: Tsaro ya fara daga kai! Kasance mai hankali koyaushe.</p>`,
     coverImage: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop',
+    categoryId: '4',
     category: {
-      id: '4',
+      $id: '4',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Dabaru',
       slug: 'dabaru'
     },
     tags: ['Tsaro', 'Privacy', 'Dabaru'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-14T14:30:00Z',
     featured: true,
-    views: 890
+    views: 890,
+    status: 'published'
   },
   {
-    id: '3',
+    $id: '3',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'WhatsApp Ya Ƙara Sabbin Fasaloli',
     slug: 'whatsapp-sabbin-fasaloli',
     excerpt: 'WhatsApp ya sanar da sabbin fasaloli da za su inganta hanyar sadarwa tsakanin mutane.',
@@ -339,18 +379,32 @@ export const mockArticles: Article[] = [
 
 <p>Tabbatar cewa ka sabunta WhatsApp ɗin ka don samun duk sabbin fasalolin. Je zuwa App Store ko Google Play Store don sabuntawa.</p>`,
     coverImage: 'https://images.unsplash.com/photo-1611746872915-64382b5c76da?w=800&h=600&fit=crop',
+    categoryId: '2',
     category: {
-      id: '2',
+      $id: '2',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Manhajoji',
       slug: 'manhajoji'
     },
     tags: ['WhatsApp', 'Sadarwa', 'Sabbin Fasaloli'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-13T09:15:00Z',
-    views: 2100
+    views: 2100,
+    status: 'published',
+    featured: false
   },
   {
-    id: '4',
+    $id: '4',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'Yadda Ake Yin Screenshot A Wayoyi Daban-daban',
     slug: 'yadda-ake-yin-screenshot',
     excerpt: 'Koya yadda ake daukar hoton allo (screenshot) akan iPhone, Samsung, da sauran wayoyi.',
@@ -526,18 +580,32 @@ export const mockArticles: Article[] = [
 
 <p>Yi gwaji akan wayar ka kuma zaɓi hanyar da ta fi maka sauƙi!</p>`,
     coverImage: 'https://images.unsplash.com/photo-1592286927505-5d49b87f8c4a?w=800&h=600&fit=crop',
+    categoryId: '5',
     category: {
-      id: '5',
+      $id: '5',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Koyarwa',
       slug: 'koyarwa'
     },
     tags: ['Koyarwa', 'Screenshot', 'Tips'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-12T11:45:00Z',
-    views: 1567
+    views: 1567,
+    status: 'published',
+    featured: false
   },
   {
-    id: '5',
+    $id: '5',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'iPhone 15 Pro Max: Me Ya Saba?',
     slug: 'iphone-15-pro-max-sabbin-fasaloli',
     excerpt: 'Apple ta fito da iPhone 15 Pro Max mai kyakkyawan ƙira da sabbin fasaloli masu ban mamaki.',
@@ -658,18 +726,32 @@ export const mockArticles: Article[] = [
 
 <p>Idan kana neman wayar premium da za ta ɗauke ka tsawon lokaci mai tsawo, iPhone 15 Pro Max ita ce babbar zaɓi.</p>`,
     coverImage: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&h=600&fit=crop',
+    categoryId: '1',
     category: {
-      id: '1',
+      $id: '1',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Wayoyi',
       slug: 'wayoyi'
     },
     tags: ['iPhone', 'Apple', 'Bita'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-11T16:20:00Z',
-    views: 3200
+    views: 3200,
+    status: 'published',
+    featured: true
   },
   {
-    id: '6',
+    $id: '6',
+    $createdAt: new Date().toISOString(),
+    $updatedAt: new Date().toISOString(),
+    $permissions: [],
+    $collectionId: 'mock_collection',
+    $databaseId: 'mock_database',
     title: 'Mafi Kyawun Manhajoji Na AI A 2025',
     slug: 'mafi-kyawun-manhajoji-na-ai',
     excerpt: 'Duba mafi kyawun manhajojin AI da za ka iya amfani da su don inganta aikin ka.',
@@ -832,16 +914,24 @@ export const mockArticles: Article[] = [
 
 <p>Zaɓi manhajojin da suka dace da buƙatun ka kuma fara yin amfani da su yau. Kada ka manta: AI yana nan don taimaka mana, ba don maye gurbinmu ba!</p>`,
     coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop',
+    categoryId: '2',
     category: {
-      id: '2',
+      $id: '2',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      $permissions: [],
+      $collectionId: 'mock_collection',
+      $databaseId: 'mock_database',
       name: 'Manhajoji',
       slug: 'manhajoji'
     },
     tags: ['AI', 'Manhajoji', 'Technology'],
+    authorId: '1',
     author: mockAuthor,
     publishedAt: '2025-10-10T08:00:00Z',
     featured: true,
-    views: 4100
+    views: 4100,
+    status: 'published'
   }
 ];
 
@@ -851,7 +941,7 @@ export function getArticleBySlug(slug: string): Article | undefined {
 }
 
 export function getArticlesByCategory(categorySlug: string): Article[] {
-  return mockArticles.filter(article => article.category.slug === categorySlug);
+  return mockArticles.filter(article => article.category?.slug === categorySlug);
 }
 
 export function getFeaturedArticles(): Article[] {
@@ -859,13 +949,13 @@ export function getFeaturedArticles(): Article[] {
 }
 
 export function getRelatedArticles(currentArticleId: string, limit: number = 3): Article[] {
-  const currentArticle = mockArticles.find(a => a.id === currentArticleId);
+  const currentArticle = mockArticles.find(a => a.$id === currentArticleId);
   if (!currentArticle) return [];
   
   return mockArticles
     .filter(article => 
-      article.id !== currentArticleId && 
-      article.category.id === currentArticle.category.id
+      article.$id !== currentArticleId && 
+      article.category?.$id === currentArticle.category?.$id
     )
     .slice(0, limit);
 }

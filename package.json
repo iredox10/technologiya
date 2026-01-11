@@ -23,6 +23,7 @@
     "appwrite": "^21.2.1",
     "astro": "^5.14.6",
     "dayjs": "^1.11.18",
+    "framer-motion": "^12.24.12",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.0",
     "react": "^19.2.0",

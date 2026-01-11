@@ -24,7 +24,7 @@ export default function UserLogin() {
           showErrorToast(result.error || 'Kuskure wajen shiga');
         }
       } else {
-        const result = await authService.createAccount(email, password, name);
+        const result = await authService.register(email, password, name);
         if (result.success) {
           showSuccessToast('An ƙirƙiri asusu! Yanzu za ku iya shiga.');
           setIsLogin(true);

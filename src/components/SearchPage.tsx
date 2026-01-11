@@ -37,15 +37,15 @@ export default function SearchPage() {
         // Enrich articles with category and author data
         const enrichedArticles = await Promise.all(
           articles.map(async (article) => {
-            const [category, author] = await Promise.all([
+            const [categoryResult, authorResult] = await Promise.all([
               article.categoryId ? categoryService.getCategory(article.categoryId) : null,
               article.authorId ? authorService.getAuthor(article.authorId) : null,
             ]);
             
             return {
               ...article,
-              category: category || undefined,
-              author: author || undefined,
+              category: categoryResult?.success ? (categoryResult.data as unknown as import('../types').Category) : undefined,
+              author: authorResult?.success ? (authorResult.data as unknown as import('../types').Author) : undefined,
             };
           })
         );
