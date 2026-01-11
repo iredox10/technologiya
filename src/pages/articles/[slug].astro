@@ -80,14 +80,16 @@ const baseUrl = (Astro.site?.toString().replace(/\/$/, '') || 'https://technolog
 const shareUrl = `${baseUrl}/articles/${article.slug}`;
 const shareTitle = article.title;
 const shareExcerpt = article.excerpt;
-const shareImage = article.coverImage || '';
+const shareImage = article.coverImage;
 
 // Use zero-width space trick for Telegram to hide link text but keep card
 const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('\u200B')}`;
 // WhatsApp needs the URL to be visible to generate a preview reliably
 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
 
-const absoluteImageUrl = shareImage.startsWith('http') ? shareImage : `${baseUrl}${shareImage}`;
+const absoluteImageUrl = shareImage 
+  ? (shareImage.startsWith('http') ? shareImage : `${baseUrl}${shareImage}`)
+  : undefined;
 ---
 
 
@@ -95,6 +97,7 @@ const absoluteImageUrl = shareImage.startsWith('http') ? shareImage : `${baseUrl
   title={`${article.title} - Technologiya`}
   description={article.excerpt}
   image={absoluteImageUrl}
+  type="article"
 >
   <article 
     class="min-h-screen bg-white dark:bg-[#030712]"

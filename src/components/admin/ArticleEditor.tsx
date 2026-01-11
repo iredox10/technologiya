@@ -217,8 +217,8 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
         const uploadResult = await storageService.uploadFile(bucketId, formData.coverImageFile);
         
         if (uploadResult.success && uploadResult.data) {
-          // Get the file preview URL
-          coverImageUrl = storageService.getFilePreview(bucketId, uploadResult.data.$id, 800, 400);
+          // Get the file preview URL (1200x630 for better social sharing)
+          coverImageUrl = storageService.getFilePreview(bucketId, uploadResult.data.$id, 1200, 630);
         } else {
           console.error('Failed to upload cover image:', uploadResult.error);
           showErrorToast('An samu kuskure wajen loda hoton');
