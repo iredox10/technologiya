@@ -52,6 +52,39 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editorMode, setEditorMode] = useState<'rich' | 'markdown'>('rich');
+  const [suggestedImagePrompt, setSuggestedImagePrompt] = useState('');
+
+  // Check for AI Draft Data in Session Storage
+  useEffect(() => {
+    if (!isEditing) {
+      const draftData = sessionStorage.getItem('ai_draft_article');
+      if (draftData) {
+        try {
+          const parsed = JSON.parse(draftData);
+          setFormData(prev => ({
+            ...prev,
+            title: parsed.title || '',
+            slug: generateSlug(parsed.title || ''),
+            excerpt: parsed.excerpt || '',
+            content: parsed.content || '',
+            tags: parsed.tags || [],
+            // We set editor mode to markdown since AI returns markdown
+          }));
+          setEditorMode('markdown');
+          
+          if (parsed.imagePrompt) {
+            setSuggestedImagePrompt(parsed.imagePrompt);
+          }
+          
+          // Clear it so it doesn't persist on refresh/navigation elsewhere
+          sessionStorage.removeItem('ai_draft_article');
+          showSuccessToast('An loda daftarin AI!');
+        } catch (e) {
+          console.error('Error parsing AI draft:', e);
+        }
+      }
+    }
+  }, [isEditing]);
 
   // Fetch categories and authors
   useEffect(() => {
@@ -533,6 +566,32 @@ export default function ArticleEditor({ articleId, isEditing = false, isAuthorMo
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">
               Hoton Murfin *
             </label>
+            
+            {suggestedImagePrompt && (
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1">
+                      Shawaran Hoton AI
+                    </p>
+                    <p className="text-sm text-blue-900 dark:text-blue-100 font-medium leading-relaxed">
+                      {suggestedImagePrompt}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(suggestedImagePrompt);
+                      showSuccessToast('An kwafi prompt!');
+                    }}
+                    className="shrink-0 text-xs bg-white dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-700 hover:bg-blue-50 transition-colors font-bold"
+                  >
+                    Kwafi
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {!formData.coverImage ? (
                 <label className="cursor-pointer group block">

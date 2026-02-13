@@ -9,7 +9,8 @@ import {
   FiX,
   FiEdit,
   FiPlusCircle,
-  FiLogOut
+  FiLogOut,
+  FiCpu
 } from 'react-icons/fi';
 import { authService, authorService } from '../../lib/appwriteServices';
 import type { Author } from '../../types';
@@ -67,6 +68,7 @@ export default function AdminSidebar() {
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/admin', icon: FiHome },
+    { name: 'AI Writer', href: '/admin/ai-writer', icon: FiCpu },
     { name: 'Labarai', href: '/admin/articles', icon: FiFileText, badge: 12 },
     { name: 'Rubutun Sabon Labari', href: '/admin/articles/new', icon: FiPlusCircle },
     { name: 'Kalmomi', href: '/admin/categories', icon: FiFolder },

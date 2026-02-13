@@ -74,6 +74,17 @@ export class AuthService {
     }
   }
 
+  // Update user password
+  async updatePassword(password: string, oldPassword?: string) {
+    try {
+      const result = await account.updatePassword(password, oldPassword);
+      return { success: true, data: result };
+    } catch (error: any) {
+      console.error('Update password error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Check if user is authenticated
   async isAuthenticated() {
     const result = await this.getCurrentUser();

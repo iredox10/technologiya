@@ -1,0 +1,16 @@
+
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import AIWriterComponent from '../../components/admin/AIWriter';
+
+// Protect route (basic check, more robust auth is in the components)
+// In a real app, you'd verify the session cookie here
+---
+
+<MainLayout title="AI Writer - Technologiya Admin">
+  <div class="min-h-screen bg-gray-50 dark:bg-[#030712] py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <AIWriterComponent client:load />
+    </div>
+  </div>
+</MainLayout>

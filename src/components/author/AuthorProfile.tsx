@@ -159,6 +159,40 @@ export default function AuthorProfile() {
     setProfileData({ ...profileData, avatar });
   };
 
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: '',
+    oldPassword: ''
+  });
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showErrorToast('Kalmar sirri ba ta yi daidai ba');
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      showErrorToast('Kalmar sirri ta yi gajarta (aƙalla 8)');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const result = await authService.updatePassword(passwordForm.newPassword, passwordForm.oldPassword);
+      if (result.success) {
+        showSuccessToast('An canja kalmar sirri!');
+        setPasswordForm({ newPassword: '', confirmPassword: '', oldPassword: '' });
+      } else {
+        showErrorToast('Kuskure: ' + result.error);
+      }
+    } catch (error) {
+      showErrorToast('An samu matsala');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -384,16 +418,52 @@ export default function AuthorProfile() {
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Canja Kalmar Sirri
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Don canja kalmar sirri, za a haɗa wannan da Appwrite bayan an gama haɗawa.
-        </p>
-        <button
-          type="button"
-          disabled
-          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-lg cursor-not-allowed"
-        >
-          Canja Kalmar Sirri
-        </button>
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tsohuwar Kalmar Sirri
+            </label>
+            <input
+              type="password"
+              value={passwordForm.oldPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Sabuwar Kalmar Sirri
+            </label>
+            <input
+              type="password"
+              value={passwordForm.newPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              required
+              minLength={8}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Maimaita Sabuwar Kalmar Sirri
+            </label>
+            <input
+              type="password"
+              value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isChangingPassword}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isChangingPassword ? 'Ana canjawa...' : 'Canja Kalmar Sirri'}
+          </button>
+        </form>
       </div>
     </div>
   );

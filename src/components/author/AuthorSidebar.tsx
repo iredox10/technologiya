@@ -7,7 +7,8 @@ import {
   FiX,
   FiEdit,
   FiPlusCircle,
-  FiLogOut
+  FiLogOut,
+  FiCpu
 } from 'react-icons/fi';
 import { authService, authorService } from '../../lib/appwriteServices';
 
@@ -68,6 +69,7 @@ export default function AuthorSidebar() {
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/author', icon: FiHome },
+    { name: 'AI Writer', href: '/author/ai-writer', icon: FiCpu },
     { name: 'Labaran Na', href: '/author/articles', icon: FiFileText, badge: currentAuthor.articlesCount },
     { name: 'Rubuta Sabon Labari', href: '/author/articles/new', icon: FiPlusCircle },
     { name: 'Bayanai Na', href: '/author/profile', icon: FiUser },

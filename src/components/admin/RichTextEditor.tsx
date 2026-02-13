@@ -1,5 +1,5 @@
 import { useEditor, EditorContent } from '@tiptap/react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -17,8 +17,12 @@ import {
   FiAlignLeft,
   FiAlignCenter,
   FiAlignRight,
-  FiAlignJustify
+  FiAlignJustify,
+  FiUpload,
+  FiLoader
 } from 'react-icons/fi';
+import { storageService } from '../../lib/appwriteServices';
+import { showErrorToast, showSuccessToast } from '../../utils/toast';
 
 interface RichTextEditorProps {
   content: string;
@@ -27,14 +31,18 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ content, onChange, placeholder = 'Rubuta abu a nan...' }: RichTextEditorProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
       Image.configure({
         HTMLAttributes: {
-          class: 'rounded-lg max-w-full h-auto',
+          class: 'rounded-lg w-full h-auto object-contain',
         },
+        inline: false,
       }),
       Link.configure({
         openOnClick: false,
@@ -77,6 +85,48 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Rubut
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
+  };
+
+  const handleLocalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showErrorToast('Da fatan za a zaɓi hoton kawai');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showErrorToast('Hoton ya yi girma da yawa. Matsakaicin girman shine 10MB');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      const bucketId = import.meta.env.PUBLIC_APPWRITE_BUCKET_ARTICLE_IMAGES;
+      const uploadResult = await storageService.uploadFile(bucketId, file);
+      
+      if (uploadResult.success && uploadResult.data) {
+        const imageUrl = storageService.getFileView(bucketId, uploadResult.data.$id);
+        editor.chain().focus().setImage({ src: imageUrl, alt: file.name }).run();
+        showSuccessToast('An loda hoton cikin nasara!');
+      } else {
+        showErrorToast('An samu kuskure wajen loda hoton');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showErrorToast('An samu kuskure wajen loda hoton');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
   };
 
   const setLink = () => {
@@ -245,7 +295,20 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Rubut
           <MenuButton
             onClick={addImage}
             icon={FiImage}
-            title="Saka hoto"
+            title="Saka hoto daga URL"
+          />
+          <MenuButton
+            onClick={openFilePicker}
+            disabled={isUploading}
+            icon={isUploading ? FiLoader : FiUpload}
+            title="Loda hoto daga na'urar ka"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleLocalImageUpload}
+            className="hidden"
           />
         </div>
       </div>
